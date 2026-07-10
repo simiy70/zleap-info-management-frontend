@@ -1,0 +1,601 @@
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+
+/* ─── SVG ICONS ─── */
+const Icon = {
+  Search:  () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+  Filter:  () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M4 5h16l-6.5 7.2V18l-3 1.5v-7.3L4 5z"/></svg>,
+  Close:   () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  List:    () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+  Card:    () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
+  Plus:    () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  More:    () => <svg width="15" height="15" fill="none" viewBox="0 0 15 15"><circle cx="7.5" cy="2.5" r="1.2" fill="currentColor"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/><circle cx="7.5" cy="12.5" r="1.2" fill="currentColor"/></svg>,
+  Check:   () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>,
+  Send:    () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>,
+  ChevronDown: () => <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>,
+  Bell:    () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>,
+  Help:    () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5"/><circle cx="12" cy="16.5" r="0.8" fill="currentColor"/></svg>,
+  Lang:    () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M4 5h10"/><path d="M9 3v2"/><path d="M6 5c0 5 4 8 8 9"/><path d="M14 5c0 4-4 7-8 8"/><path d="M13 21l4-10 4 10"/><path d="M14.5 18h5"/></svg>,
+  Bot:     () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="12" rx="3"/><circle cx="8.5" cy="13" r="1.2" fill="currentColor"/><circle cx="15.5" cy="13" r="1.2" fill="currentColor"/><path d="M12 7V4"/><circle cx="12" cy="3" r="1" fill="currentColor"/></svg>,
+  Compass: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polygon points="16 8 12 14 8 16 12 10 16 8"/></svg>,
+  Star:    () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  Sparkle: () => <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9L18 15z"/></svg>,
+  Chat:    () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
+  Grid:    () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>,
+};
+
+/* ─── 助手数据 ─── */
+const assistants = [
+  { id: 1, name: "test小狗",   emoji: "🐶", desc: "暂无简介", tone: "amber",   followed: true,  creator: "这里最…" },
+  { id: 2, name: "飞书CLI",    emoji: "🤖", desc: "飞书研发全流程的智能助手，可代为召集会议、写报告。", tone: "slate", followed: true, creator: "研发团队" },
+  { id: 3, name: "搜索引擎",   emoji: "🍇", desc: "多源信息聚合检索，同步整理关键结论。", tone: "violet", followed: true, creator: "运营团队" },
+  { id: 4, name: "界面新闻",   emoji: "📰", desc: "追踪产品与设计动态，日报级摘要。", tone: "rose",   followed: true, creator: "运营团队" },
+  { id: 5, name: "WENDANG",   emoji: "🐘", desc: "文档管理专家，帮你规整长文档。", tone: "gray",   followed: false },
+  { id: 6, name: "611test",    emoji: "🦜", desc: "内部测试机器人，用于回归测试对话。", tone: "green",  followed: true, creator: "这里最…" },
+];
+
+/* ─── 对话数据 ─── */
+const chatSessions = [
+  { id: 100, name: "通知中心",   avatarKind: "bell",  time: "15:15",     preview: "报告 \"暂无数据\" 生成失败", unread: true  },
+  { id: 101, name: "飞书CLI",    avatarKind: "cli",   time: "15:05",     preview: "收到。全景梳理与核心结论已就…", unread: false },
+  { id: 102, name: "搜索引擎",   avatarKind: "grape", time: "15:03",     preview: "✅ 任务终结·档案封存确认 收…", unread: true  },
+  { id: 103, name: "哦i皮",      avatarKind: "man1",  time: "三天前",    preview: "1", unread: false },
+  { id: 104, name: "Theshy",     avatarKind: "man2",  time: "2026-6-30", preview: "你好呀，很开心见到你。以后你…", unread: false },
+  { id: 105, name: "界面新闻",   avatarKind: "woman", time: "2026-6-16", preview: "知识库有哪些数据", unread: true  },
+  { id: 106, name: "test小狗",   avatarKind: "dog",   time: "2026-6-16", preview: "嗨~看到你发了个 11，是手滑了…", unread: false },
+  { id: 107, name: "611test",    avatarKind: "bird",  time: "2026-6-11", preview: "你好呀，很开心见到你。以后…", unread: false },
+  { id: 108, name: "WENDANG",   avatarKind: "elephant", time: "2026-6-11", preview: "抱歉，处理出现问题了", unread: true },
+];
+
+/* 会话线程（右侧展示，简化示例：飞书CLI） */
+const chatThread = [
+  { role: "bot", type: "text", content: `整体来看，智跃平台已经从早期的"敏捷试错"平稳过渡到 **规范化管理** 阶段，管理颗粒度和底层稳定性都有了质的飞跃。这轮的信息盘点算是圆满完成了。看您是准备结案，还是有其他想要关注的点？` },
+  { role: "time", content: "15:01" },
+  { role: "bot", type: "card-success", title: "报告已创建《智跃平台研发迭代与架构演进全景回顾》", sub: "智跃平台研发迭代与架构演进全景回顾", rows: [["状态", "已完成"], ["进度", "100%"]], link: "点击查看详情" },
+  { role: "bot", type: "text", content: `收到。全景梳理与核心结论已就位。您看是走归档结案，还是锁定特定模块（如 RAG 检索、MCP 治理或自动化分发）继续深潜？我随时配合您的节奏。` },
+  { role: "time", content: "15:11" },
+  { role: "bot", type: "card-error", title: "报告创建失败，失败原因：该时间段内暂无数据", rows: [["原因", "该时间段内暂无数据"], ["状态", "失败"]] },
+];
+
+/* ─── 头像组件 ─── */
+const AVATAR_TONES = {
+  amber:  { ring: "bg-[radial-gradient(circle_at_50%_50%,#fff2cf_0%,#ffe6a6_45%,rgba(255,230,166,0)_72%)]" },
+  slate:  { ring: "bg-[radial-gradient(circle_at_50%_50%,#e6edf6_0%,#c6d3e2_50%,rgba(198,211,226,0)_75%)]" },
+  violet: { ring: "bg-[radial-gradient(circle_at_50%_50%,#ede4ff_0%,#c9b6ee_50%,rgba(201,182,238,0)_75%)]" },
+  rose:   { ring: "bg-[radial-gradient(circle_at_50%_50%,#ffe1e6_0%,#f5b9c4_50%,rgba(245,185,196,0)_75%)]" },
+  gray:   { ring: "bg-[radial-gradient(circle_at_50%_50%,#eaeef2_0%,#c9d1da_50%,rgba(201,209,218,0)_75%)]" },
+  green:  { ring: "bg-[radial-gradient(circle_at_50%_50%,#dff5c8_0%,#a9dc7b_50%,rgba(169,220,123,0)_75%)]" },
+};
+
+function AssistantAvatar({ emoji, tone = "amber", size = 76 }) {
+  const t = AVATAR_TONES[tone] || AVATAR_TONES.amber;
+  return (
+    <div className={`flex items-center justify-center rounded-full ${t.ring}`}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.6), lineHeight: 1 }}>
+      <span>{emoji}</span>
+    </div>
+  );
+}
+
+/* 会话头像（小尺寸带小圆点未读） */
+function ChatAvatar({ kind, unread }) {
+  const styles = {
+    bell:     { cls: "bg-emerald-500 text-white",              content: <Icon.Bell /> },
+    cli:      { cls: "bg-slate-600 text-white",                content: "🧑‍💼" },
+    grape:    { cls: "bg-violet-500 text-white text-lg",       content: "🍇" },
+    man1:     { cls: "bg-orange-400 text-white text-lg",       content: "🧔" },
+    man2:     { cls: "bg-sky-500 text-white text-lg",          content: "🧑" },
+    woman:    { cls: "bg-rose-400 text-white text-lg",         content: "👩" },
+    dog:      { cls: "bg-amber-200",                           content: "🐶" },
+    bird:     { cls: "bg-emerald-500",                         content: "🦜" },
+    elephant: { cls: "bg-neutral-400 text-white text-lg",      content: "🐘" },
+  };
+  const s = styles[kind] || styles.cli;
+  return (
+    <div className="relative shrink-0">
+      <div className={`flex h-10 w-10 items-center justify-center overflow-hidden rounded-full ${s.cls}`}>
+        <span>{s.content}</span>
+      </div>
+      {unread && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />}
+    </div>
+  );
+}
+
+/* ─── ASSISTANT CARD (管理视图) ─── */
+function AssistantCard({ item, onContext }) {
+  return (
+    <div className="group flex cursor-pointer flex-col items-center rounded-2xl border border-neutral-200 bg-white p-5 transition-all hover:border-neutral-300 hover:shadow-md"
+      style={{ minHeight: "220px" }}>
+      <div className="flex w-full items-start justify-end">
+        <button onClick={e => { e.stopPropagation(); onContext && onContext(item, e); }}
+          className="flex h-6 w-6 items-center justify-center rounded-lg text-neutral-500/60 opacity-0 transition group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700">
+          <Icon.More />
+        </button>
+      </div>
+      <div className="mt-1">
+        <AssistantAvatar emoji={item.emoji} tone={item.tone} />
+      </div>
+      <div className="mt-3 line-clamp-1 text-[15px] font-semibold text-neutral-900">{item.name}</div>
+      <div className="mt-2 line-clamp-2 text-center text-[12px] leading-5 text-neutral-400">{item.desc}</div>
+      <div className="mt-auto pt-4">
+        {item.followed ? (
+          <button className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-white px-3.5 py-1 text-[12px] font-medium text-emerald-600 transition hover:bg-emerald-50">
+            <Icon.Check />
+            <span>已关注</span>
+          </button>
+        ) : (
+          <button className="inline-flex items-center gap-1 rounded-full bg-orange-500 px-3.5 py-1 text-[12px] font-medium text-white shadow-sm shadow-orange-500/25 transition hover:bg-orange-600">
+            <Icon.Plus />
+            <span>关注</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── ASSISTANT LIST ROW (列表视图) ─── */
+function AssistantRow({ item, onContext }) {
+  return (
+    <div className="group flex cursor-pointer items-center gap-4 rounded-xl border border-neutral-200 bg-white px-4 py-3 transition-all hover:border-neutral-300 hover:shadow-sm">
+      <AssistantAvatar emoji={item.emoji} tone={item.tone} size={48} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[14px] font-semibold text-neutral-900">{item.name}</div>
+        <div className="mt-0.5 line-clamp-1 text-[12px] text-neutral-400">{item.desc}</div>
+      </div>
+      {item.creator && <div className="hidden shrink-0 text-[12px] text-neutral-400 md:block">创建人：{item.creator}</div>}
+      {item.followed ? (
+        <button className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-200 bg-white px-3 py-1 text-[12px] font-medium text-emerald-600 transition hover:bg-emerald-50">
+          <Icon.Check />
+          <span>已关注</span>
+        </button>
+      ) : (
+        <button className="inline-flex shrink-0 items-center gap-1 rounded-full bg-orange-500 px-3 py-1 text-[12px] font-medium text-white shadow-sm shadow-orange-500/25 transition hover:bg-orange-600">
+          <Icon.Plus />
+          <span>关注</span>
+        </button>
+      )}
+      <button onClick={e => { e.stopPropagation(); onContext && onContext(item, e); }}
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-neutral-500/60 opacity-0 transition group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700">
+        <Icon.More />
+      </button>
+    </div>
+  );
+}
+
+/* ─── 管理视图 ─── */
+function ManagementView({ items, view }) {
+  if (view === "list") {
+    return (
+      <div className="space-y-2 p-6">
+        {items.map(a => <AssistantRow key={a.id} item={a} />)}
+      </div>
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 gap-3 p-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {items.map(a => <AssistantCard key={a.id} item={a} />)}
+    </div>
+  );
+}
+
+/* ─── 对话视图 ─── */
+function ChatView() {
+  const [activeChatId, setActiveChatId] = useState(101);
+  const [chatSearch, setChatSearch] = useState("");
+  const [draft, setDraft] = useState("");
+  const [visibleSessionCount, setVisibleSessionCount] = useState(6);
+  const messagesRef = useRef(null);
+  const sessionsListRef = useRef(null);
+  const activeChat = chatSessions.find(c => c.id === activeChatId) || chatSessions[0];
+
+  const filteredSessions = useMemo(() => {
+    const kw = chatSearch.trim().toLowerCase();
+    if (!kw) return chatSessions;
+    return chatSessions.filter(c =>
+      c.name.toLowerCase().includes(kw) || c.preview.toLowerCase().includes(kw)
+    );
+  }, [chatSearch]);
+
+  const visibleSessions = filteredSessions.slice(0, visibleSessionCount);
+
+  useEffect(() => {
+    setVisibleSessionCount(6);
+  }, [chatSearch]);
+
+  useEffect(() => {
+    const list = sessionsListRef.current;
+    if (list && list.scrollHeight <= list.clientHeight && visibleSessionCount < filteredSessions.length) {
+      setVisibleSessionCount(count => Math.min(count + 6, filteredSessions.length));
+    }
+  }, [visibleSessionCount, filteredSessions.length]);
+
+  const handleSessionScroll = (event) => {
+    const list = event.currentTarget;
+    if (list.scrollHeight - list.scrollTop - list.clientHeight < 64) {
+      setVisibleSessionCount(count => Math.min(count + 6, filteredSessions.length));
+    }
+  };
+
+  useEffect(() => {
+    if (messagesRef.current) messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+  }, [activeChatId]);
+
+  return (
+    <div className="px-6 pt-8">
+      <div className="flex min-h-0 overflow-hidden bg-white"
+        style={{ height: "calc(100vh - 56px - 61px - 104px)" }}>
+        {/* Left: chat list */}
+        <aside className="flex w-[300px] shrink-0 flex-col border-r border-neutral-100 bg-[#fafaf8]">
+          <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+            <div className="relative flex-1">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"><Icon.Search /></span>
+              <input value={chatSearch} onChange={e => setChatSearch(e.target.value)}
+                className="h-8 w-full rounded-xl bg-white pl-9 pr-3 text-sm ring-1 ring-neutral-200 placeholder-neutral-400 outline-none transition focus:ring-orange-200"
+                placeholder="搜索" />
+            </div>
+          </div>
+          <div ref={sessionsListRef} onScroll={handleSessionScroll} className="flex-1 overflow-y-auto no-scrollbar px-2 pb-3">
+            {visibleSessions.map(c => (
+              <button key={c.id} onClick={() => setActiveChatId(c.id)}
+                className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition ${c.id === activeChatId ? "bg-white shadow-sm ring-1 ring-neutral-200" : "hover:bg-white/70"}`}>
+                <ChatAvatar kind={c.avatarKind} unread={c.unread} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[13.5px] font-semibold text-neutral-900">{c.name}</span>
+                    <span className="shrink-0 text-[11px] text-neutral-400">{c.time}</span>
+                  </div>
+                  <div className="truncate text-[12px] text-neutral-500">{c.preview}</div>
+                </div>
+              </button>
+            ))}
+            {visibleSessionCount < filteredSessions.length && (
+              <div className="py-3 text-center text-[11px] text-neutral-400">继续下滑加载</div>
+            )}
+          </div>
+        </aside>
+
+        {/* Right: chat area */}
+        <main className="flex min-w-0 flex-1 flex-col bg-white">
+          <div className="flex h-12 shrink-0 items-center justify-between border-b border-neutral-100 px-6">
+            <div className="text-[15px] font-semibold text-neutral-900">{activeChat.name}</div>
+            <button className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700">
+              <Icon.More />
+            </button>
+          </div>
+
+          <div ref={messagesRef} className="flex-1 space-y-3 overflow-y-auto no-scrollbar bg-[#fafaf8] px-8 py-6">
+            {chatThread.map((m, idx) => {
+              if (m.role === "time") {
+                return <div key={idx} className="py-1 text-center text-[12px] text-neutral-400">{m.content}</div>;
+              }
+              if (m.type === "text") {
+                const parts = m.content.split(/\*\*(.+?)\*\*/g);
+                return (
+                  <div key={idx} className="max-w-[80%] self-start rounded-2xl bg-white px-4 py-3 text-[13.5px] leading-relaxed text-neutral-800 ring-1 ring-neutral-100">
+                    {parts.map((p, i) => i % 2 === 1 ? <strong key={i} className="font-semibold text-neutral-900">{p}</strong> : <span key={i}>{p}</span>)}
+                  </div>
+                );
+              }
+              if (m.type === "card-success") {
+                return (
+                  <div key={idx} className="max-w-[72%] self-start rounded-2xl border border-emerald-200/70 bg-emerald-50/70 px-4 py-3.5">
+                    <div className="text-[13.5px] font-semibold text-neutral-900">{m.title}</div>
+                    {m.sub && <div className="mt-1 text-[13px] text-neutral-600">{m.sub}</div>}
+                    <div className="mt-2 flex items-center gap-6 text-[12.5px] text-neutral-600">
+                      {m.rows.map(([k, v], i) => (
+                        <span key={i}><span className="text-neutral-500">{k}：</span><span className="font-medium text-neutral-800">{v}</span></span>
+                      ))}
+                    </div>
+                    {m.link && (
+                      <button className="mt-2 inline-flex items-center gap-0.5 text-[12.5px] font-medium text-emerald-600 hover:text-emerald-700">
+                        <span>{m.link}</span>
+                        <span>›</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+              if (m.type === "card-error") {
+                return (
+                  <div key={idx} className="max-w-[72%] self-start rounded-2xl border border-rose-200/70 bg-rose-50/70 px-4 py-3.5">
+                    <div className="text-[13.5px] font-semibold text-rose-800">{m.title}</div>
+                    <div className="mt-2 space-y-1 text-[12.5px] text-rose-700">
+                      {m.rows.map(([k, v], i) => (
+                        <div key={i}><span className="text-rose-600/80">{k}：</span><span className="font-medium">{v}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+
+          <div className="shrink-0 border-t border-neutral-100 bg-white p-4">
+            <button className="mb-2 inline-flex items-center gap-1 rounded-lg bg-neutral-100 px-2.5 py-1 text-[12px] text-neutral-600 transition hover:bg-neutral-200">
+              开启新话题
+            </button>
+            <div className="relative rounded-xl border border-neutral-200 bg-white p-3 pr-11 transition focus-within:border-orange-300 focus-within:ring-2 focus-within:ring-orange-100">
+              <textarea
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                rows="2"
+                placeholder={`随便给 ${activeChat.name} 发点什么~`}
+                className="w-full resize-none border-0 bg-transparent text-[13.5px] text-neutral-800 outline-none placeholder-neutral-400" />
+              <button className={`absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full transition ${draft.trim() ? "bg-orange-500 text-white shadow-sm shadow-orange-500/25 hover:bg-orange-600" : "bg-neutral-100 text-neutral-400"}`}
+                title="发送">
+                <Icon.Send />
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/* ─── MAIN APP ─── */
+const VIEW_TABS = [
+  { id: "chat",       label: "对话",     Icon: Icon.Chat },
+  { id: "management", label: "助手管理", Icon: Icon.Grid },
+];
+
+const SUB_TABS = [
+  { id: "mine",      label: "我的关注" },
+  { id: "created",   label: "我创建的" },
+  { id: "recommend", label: "推荐" },
+];
+
+/* ─── 创建助手弹窗 ─── */
+function CreateAssistantModal({ onClose, onCreate }) {
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+  const [emoji, setEmoji] = useState("🐣");
+  const [tone, setTone] = useState("amber");
+  const emojis = ["🐶", "🐣", "🦜", "🐘", "🍇", "🤖", "📰", "🧠", "✨", "🚀", "💡", "🎯"];
+  const tones = [
+    { id: "amber",  label: "琥珀" }, { id: "slate",  label: "石板" },
+    { id: "violet", label: "紫罗兰" }, { id: "rose",   label: "玫瑰" },
+    { id: "green",  label: "翠绿" }, { id: "gray",   label: "灰岩" },
+  ];
+  const canCreate = name.trim().length > 0;
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-neutral-900/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed left-1/2 top-1/2 z-50 w-[520px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
+          <div className="text-[15px] font-semibold text-neutral-900">创建助手</div>
+          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700">
+            <Icon.Close />
+          </button>
+        </div>
+        <div className="space-y-5 px-6 py-5">
+          {/* 头像预览 */}
+          <div className="flex items-center gap-4">
+            <AssistantAvatar emoji={emoji} tone={tone} size={72} />
+            <div className="flex-1 space-y-2">
+              <div className="text-[12px] text-neutral-500">图标</div>
+              <div className="flex flex-wrap gap-1.5">
+                {emojis.map(e => (
+                  <button key={e} onClick={() => setEmoji(e)}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg border text-lg transition ${emoji === e ? "border-orange-300 bg-orange-50" : "border-neutral-200 bg-white hover:border-neutral-300"}`}>
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 头像色调 */}
+          <div>
+            <div className="mb-2 text-[12px] text-neutral-500">头像色调</div>
+            <div className="flex flex-wrap gap-2">
+              {tones.map(t => (
+                <button key={t.id} onClick={() => setTone(t.id)}
+                  className={`rounded-full border px-3 py-1 text-[12px] transition ${tone === t.id ? "border-orange-300 bg-orange-50 text-orange-600" : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"}`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 名称 */}
+          <div>
+            <div className="mb-1.5 text-[12px] text-neutral-500">名称 <span className="text-rose-500">*</span></div>
+            <input value={name} onChange={e => setName(e.target.value)}
+              className="h-10 w-full rounded-lg border border-neutral-200 bg-white px-3 text-sm outline-none transition placeholder-neutral-400 focus:border-orange-300 focus:ring-2 focus:ring-orange-100"
+              placeholder="给助手起个名字" />
+          </div>
+
+          {/* 简介 */}
+          <div>
+            <div className="mb-1.5 text-[12px] text-neutral-500">简介</div>
+            <textarea value={desc} onChange={e => setDesc(e.target.value)} rows="3"
+              className="w-full resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm outline-none transition placeholder-neutral-400 focus:border-orange-300 focus:ring-2 focus:ring-orange-100"
+              placeholder="用一两句话描述这个助手能做什么" />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-neutral-100 bg-neutral-50/50 px-6 py-3">
+          <button onClick={onClose} className="h-9 rounded-xl px-4 text-sm text-neutral-600 transition hover:bg-neutral-100">取消</button>
+          <button disabled={!canCreate}
+            onClick={() => { onCreate({ name, desc, emoji, tone }); onClose(); }}
+            className={`h-9 rounded-xl px-4 text-sm font-medium transition ${canCreate ? "bg-orange-500 text-white shadow-sm shadow-orange-500/25 hover:bg-orange-600" : "bg-neutral-100 text-neutral-400"}`}>
+            创建
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default function AssistantPage({ onNavigate }) {
+  const [viewMode, setViewMode] = useState("management"); // "chat" | "management"
+  const [subTab, setSubTab]     = useState("created");     // "mine" | "created" | "recommend"
+  const [search, setSearch]     = useState("");
+  const [filterActive, setFilterActive] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [customAssistants, setCustomAssistants] = useState([]);
+  const handleCreate = (a) => {
+    setCustomAssistants(prev => [{ id: Date.now(), ...a, followed: true, creator: "这里最…" }, ...prev]);
+  };
+
+  const filteredAssistants = useMemo(() => {
+    const all = [...customAssistants, ...assistants];
+    let base = all;
+    if (subTab === "mine")      base = base.filter(a => a.followed);
+    if (subTab === "created")   base = base.filter(a => a.creator === "这里最…");
+    if (subTab === "recommend") base = all;
+    const kw = search.trim().toLowerCase();
+    if (!kw) return base;
+    return base.filter(a => a.name.toLowerCase().includes(kw) || a.desc.toLowerCase().includes(kw));
+  }, [subTab, search, customAssistants]);
+
+  return (
+    <div className="min-h-screen bg-[#f5f4f1] text-neutral-900">
+      <div className="flex min-h-screen flex-col">
+
+        {/* ── Header：logo + user ── */}
+        <header className="flex h-14 shrink-0 items-center justify-between gap-6 border-b border-neutral-200/60 bg-[#efede9] px-6">
+          <div className="flex items-center gap-2">
+            <div className="shrink-0 text-xl font-bold tracking-tight">zleap</div>
+            <span className="rounded-md bg-white/70 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">Beta</span>
+          </div>
+          <div className="flex shrink-0 items-center gap-4">
+            <button className="text-neutral-500 transition hover:text-neutral-900" title="语言"><Icon.Lang /></button>
+            <button className="text-neutral-500 transition hover:text-neutral-900" title="帮助"><Icon.Help /></button>
+            <button className="relative text-neutral-500 transition hover:text-neutral-900" title="通知">
+              <Icon.Bell />
+              <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-[#efede9]" />
+            </button>
+            <div className="ml-1 flex items-center gap-2.5">
+              <div className="text-right">
+                <div className="text-sm font-medium leading-tight text-neutral-700">这里最…</div>
+                <div className="text-[11px] leading-tight text-neutral-400">企业版</div>
+              </div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">Z</div>
+            </div>
+          </div>
+        </header>
+
+        {/* ── Main ── */}
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+
+          {/* 二级菜单：左边视图 tab + 右边子筛选/搜索/创建 */}
+          <div className="flex shrink-0 items-center gap-4 border-b border-neutral-200/60 bg-white px-8 py-2.5">
+            {/* 左：视图 tab（对话 / 助手管理） */}
+            <nav className="flex shrink-0 items-center gap-1">
+              {VIEW_TABS.map(t => (
+                <button key={t.id} onClick={() => setViewMode(t.id)}
+                  className={`relative flex h-10 shrink-0 items-center gap-2 px-3 text-sm transition-colors ${viewMode === t.id ? "font-medium text-orange-600" : "text-neutral-500 hover:text-neutral-900"}`}>
+                  <span className={viewMode === t.id ? "text-orange-500" : "text-neutral-400"}><t.Icon /></span>
+                  <span>{t.label}</span>
+                  {viewMode === t.id && <span className="absolute inset-x-3 -bottom-2.5 h-0.5 rounded-t bg-orange-500" />}
+                </button>
+              ))}
+            </nav>
+
+            <div className="min-w-0 flex-1" />
+
+            <div className="flex shrink-0 items-center gap-3">
+              {/* 搜索（管理视图下显示；对话视图内部有独立搜索） */}
+              {viewMode === "management" && (
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"><Icon.Search /></span>
+                    <input
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      className={`h-8 w-52 rounded-xl bg-neutral-100/80 pl-9 text-sm placeholder-neutral-400 outline-none transition ring-1 ring-transparent focus:w-64 focus:bg-white focus:ring-orange-200 ${search ? "pr-8" : "pr-3"}`}
+                      placeholder="搜索助手…" />
+                    {search && (
+                      <button onClick={() => setSearch("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-300 hover:text-neutral-500">
+                        <Icon.Close />
+                      </button>
+                    )}
+                  </div>
+                  <button onClick={() => setFilterActive(active => !active)} aria-pressed={filterActive} title="筛选"
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition ${filterActive ? "bg-orange-50 text-orange-500 ring-1 ring-orange-200" : "bg-neutral-100/80 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700"}`}>
+                    <Icon.Filter />
+                  </button>
+                </div>
+              )}
+
+              {/* 主按钮：创建助手（常驻） */}
+              <button onClick={() => setShowCreate(true)}
+                className="flex h-8 items-center gap-1.5 rounded-xl bg-orange-500 px-3 text-sm font-medium text-white shadow-sm shadow-orange-500/25 transition hover:bg-orange-600">
+                <Icon.Plus />
+                <span>创建助手</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 助手管理分类标签 */}
+          {viewMode === "management" && (
+            <nav className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-neutral-200/60 bg-[#f5f4f1] px-8 py-3 no-scrollbar">
+              {SUB_TABS.map(s => (
+                <button key={s.id} onClick={() => setSubTab(s.id)}
+                  className={`flex h-9 shrink-0 items-center rounded-full border px-5 text-sm font-medium transition ${subTab === s.id ? "border-orange-500 bg-orange-500 text-white shadow-sm shadow-orange-500/20" : "border-neutral-200 bg-white text-neutral-600 hover:border-orange-200 hover:text-orange-600"}`}>
+                  {s.label}
+                </button>
+              ))}
+            </nav>
+          )}
+
+          {/* 内容区 */}
+          <div className="flex-1 overflow-y-auto pb-32">
+            {viewMode === "management"
+              ? <ManagementView items={filteredAssistants} view="card" />
+              : <ChatView />}
+          </div>
+        </main>
+      </div>
+
+      {/* ── 一级菜单：底部悬浮 dock（磨玻璃） ── */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center">
+        <nav className="pointer-events-auto flex items-end gap-1 rounded-3xl border border-white/60 bg-white/55 px-3 py-2.5 shadow-xl shadow-neutral-900/10 backdrop-blur-xl">
+          {[
+            { id: "desktop", label: "桌面", iconBg: "bg-orange-100", iconColor: "text-orange-500",
+              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg> },
+            { id: "sources", label: "信息源",
+              iconBg: "bg-violet-100", iconColor: "text-violet-600",
+              badge: { type: "count", value: 3 },
+              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="2.6"/><path d="M4 5v6c0 1.44 3.58 2.6 8 2.6s8-1.16 8-2.6V5"/><path d="M4 11v6c0 1.44 3.58 2.6 8 2.6s8-1.16 8-2.6v-6"/></svg> },
+            { id: "assistant", label: "助手", active: true,
+              iconBg: "bg-emerald-100", iconColor: "text-emerald-600",
+              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg> },
+            { id: "tasks", label: "任务",
+              iconBg: "bg-blue-100", iconColor: "text-blue-600",
+              badge: { type: "dot" },
+              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><polyline points="8.5 12.5 11 15 15.8 10"/></svg> },
+            { id: "feed", label: "动态",
+              iconBg: "bg-rose-100", iconColor: "text-rose-500",
+              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.4"/></svg> },
+          ].map(item => (
+            <button key={item.id} onClick={() => onNavigate?.(item.id)}
+              className={`group flex w-16 flex-col items-center gap-1 rounded-2xl px-1.5 py-1.5 transition-colors ${item.active ? "bg-white/60" : "hover:bg-white/50"}`}>
+              <span className="relative">
+                <span className={`flex h-11 w-11 items-center justify-center rounded-[14px] ${item.iconBg} ${item.iconColor} transition-transform group-hover:scale-[1.04] group-active:scale-95`}>
+                  {item.icon}
+                </span>
+                {item.badge?.type === "count" && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white/80">
+                    {item.badge.value}
+                  </span>
+                )}
+                {item.badge?.type === "dot" && (
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-orange-500 ring-2 ring-white/80" />
+                )}
+              </span>
+              <span className={`text-[11px] leading-none ${item.active ? "font-medium text-neutral-800" : "text-neutral-500"}`}>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* 创建助手弹窗 */}
+      {showCreate && <CreateAssistantModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />}
+    </div>
+  );
+}
+

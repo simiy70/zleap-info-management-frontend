@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import AssistantPage from './pages/AssistantPage.jsx';
+import TaskPage from './pages/TaskPage.jsx';
 
 /* ─── SVG ICONS ─── */
 const Icon = {
@@ -10548,7 +10550,7 @@ function PublicSourcesPage({ onSelectItem, search: searchProp, setSearch: setSea
 /* ─── MAIN APP ─── */
 const TABS = ["全部", "我创建的", "与我共享"];
 
-function App() {
+function InfoSourcePage({ onNavigate }) {
   const [navPage, setNavPage]       = useState("mine"); // "mine" | "shared" | "report"
   const [page, setPage]             = useState("home");
   const [detailItem, setDetailItem]   = useState(null);
@@ -11109,7 +11111,7 @@ function App() {
               ),
             },
           ].map(item => (
-            <button key={item.id}
+            <button key={item.id} onClick={() => onNavigate(item.id)}
               className={`group flex w-16 flex-col items-center gap-1 rounded-2xl px-1.5 py-1.5 transition-colors ${item.active ? "bg-white/60" : "hover:bg-white/50"}`}>
               <span className="relative">
                 <span className={`flex h-11 w-11 items-center justify-center rounded-[14px] ${item.iconBg} ${item.iconColor} transition-transform group-hover:scale-[1.04] group-active:scale-95`}>
@@ -11402,5 +11404,16 @@ function App() {
   );
 }
 
+
+function App() {
+  const [primaryPage, setPrimaryPage] = useState("sources");
+  const navigate = (page) => {
+    if (["sources", "assistant", "tasks"].includes(page)) setPrimaryPage(page);
+  };
+
+  if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} />;
+  if (primaryPage === "tasks") return <TaskPage onNavigate={navigate} />;
+  return <InfoSourcePage onNavigate={navigate} />;
+}
 
 export default App;
