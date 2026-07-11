@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import AssistantPage from './pages/AssistantPage.jsx';
+import DesktopPage from './pages/DesktopPage.jsx';
 import TaskPage from './pages/TaskPage.jsx';
 
 /* ─── SVG ICONS ─── */
@@ -11406,11 +11407,12 @@ function InfoSourcePage({ onNavigate }) {
 
 
 function App() {
-  const [primaryPage, setPrimaryPage] = useState("sources");
+  const [primaryPage, setPrimaryPage] = useState("desktop");
   const navigate = (page) => {
-    if (["sources", "assistant", "tasks"].includes(page)) setPrimaryPage(page);
+    if (["desktop", "sources", "assistant", "tasks"].includes(page)) setPrimaryPage(page);
   };
 
+  if (primaryPage === "desktop") return <DesktopPage onNavigate={navigate} />;
   if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} />;
   if (primaryPage === "tasks") return <TaskPage onNavigate={navigate} />;
   return <InfoSourcePage onNavigate={navigate} />;
