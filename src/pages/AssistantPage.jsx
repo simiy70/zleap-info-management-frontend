@@ -455,7 +455,7 @@ export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
       <div className="flex min-h-screen flex-col">
 
         {/* ── Header：logo + user ── */}
-        <GlassHeader title="助手" />
+        <GlassHeader />
 
         {/* ── Main（居中布局，与桌面/动态统一） ── */}
         <main className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-1 flex-col overflow-hidden">

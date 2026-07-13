@@ -76,7 +76,7 @@ export default function TaskPage({ onNavigate }) {
   const statusLabels = { all: "全部状态", running: "正常执行", paused: "任务暂停" };
 
   return <PageShell>
-    <GlassHeader title="任务" />
+    <GlassHeader />
     <main className="mx-auto max-w-[1280px] px-6 pb-32 pt-5">
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-[362px] max-w-full">

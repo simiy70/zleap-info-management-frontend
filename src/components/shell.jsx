@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '../lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from './ui/dropdown-menu';
 
 /* ── 页面外壳：高科技渐变底 + 光斑；variant 切换网点光晕背景 ── */
 const shellVariants = {
@@ -14,23 +15,43 @@ export function PageShell({ className, variant = 'default', children }) {
 }
 
 /* ── 顶栏（磨玻璃、吸顶） ── */
-export function GlassHeader({ title, user = 'Zhang Wei', plan = '企业版' }) {
-  return <header className="glass-strong sticky top-0 z-30 flex h-14 items-center justify-between border-x-0 border-t-0 px-6">
+export function GlassHeader({ user = 'Zhang Wei' }) {
+  return <header className="glass-strong sticky top-0 z-50 flex h-14 items-center justify-between border-x-0 border-t-0 px-6">
     <div className="flex items-center gap-2.5">
       <span className="text-xl font-bold tracking-tight">zleap</span>
       <span className="rounded-md bg-white/70 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-border/60">Beta</span>
-      {title && <span className="ml-1 text-sm font-semibold text-muted-foreground">{title}</span>}
     </div>
     <div className="flex items-center gap-4 text-[20px] text-muted-foreground">
-      <button className="relative transition hover:text-foreground" title="通知" aria-label="通知"><i className="ri-notification-3-line" /><span className="absolute right-0 top-0 h-1.5 w-1.5 rounded-full bg-rose-500" /></button>
+      <button className="transition hover:text-foreground" title="语言" aria-label="语言"><i className="ri-translate-2" /></button>
       <button className="transition hover:text-foreground" title="帮助" aria-label="帮助"><i className="ri-question-line" /></button>
-      <div className="ml-1 flex items-center gap-2.5">
-        <div className="hidden text-right sm:block">
-          <div className="text-sm font-medium leading-tight text-foreground">{user}</div>
-          <div className="text-[11px] leading-tight text-muted-foreground">{plan}</div>
-        </div>
-        <Avatar className="h-8 w-8"><AvatarFallback>{user.slice(0, 1)}</AvatarFallback></Avatar>
-      </div>
+      <button className="relative transition hover:text-foreground" title="通知" aria-label="通知"><i className="ri-notification-3-line" /><span className="absolute right-0 top-0 h-1.5 w-1.5 rounded-full bg-rose-500" /></button>
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <button className="group ml-1 flex max-w-[190px] items-center gap-2.5 rounded-xl px-1.5 py-1 transition hover:bg-white/60" aria-label="打开个人中心">
+            <Avatar className="h-8 w-8"><AvatarFallback>{user.slice(0, 1)}</AvatarFallback></Avatar>
+            <span className="hidden max-w-[112px] truncate text-sm font-medium text-foreground sm:block">{user}</span>
+            <i className="ri-arrow-down-s-line text-base transition-transform group-aria-expanded:rotate-180" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-[320px] overflow-hidden rounded-2xl !bg-white p-0 backdrop-blur-xl" align="end">
+          <div className="flex flex-col items-center px-6 pb-5 pt-7 text-center">
+            <Avatar className="h-20 w-20 shadow-lg"><AvatarFallback className="text-2xl">{user.slice(0, 1)}</AvatarFallback></Avatar>
+            <div className="mt-4 flex max-w-full items-start justify-center gap-2">
+              <div className="line-clamp-2 text-[17px] font-semibold leading-6 text-foreground">{user}</div>
+              <button className="mt-0.5 shrink-0 text-lg text-muted-foreground transition hover:text-foreground" title="编辑个人资料" aria-label="编辑个人资料"><i className="ri-pencil-line" /></button>
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">13122226666</div>
+          </div>
+          <div className="px-3 pb-3">
+            <DropdownMenuItem className="h-11 text-[15px]"><i className="ri-settings-3-line text-xl" />账号设置</DropdownMenuItem>
+            <DropdownMenuItem className="h-11 text-[15px]"><i className="ri-user-add-line text-xl" />邀请好友</DropdownMenuItem>
+            <DropdownMenuItem className="h-11 text-[15px]"><i className="ri-download-2-line text-xl" />下载 Zleap APP</DropdownMenuItem>
+            <DropdownMenuItem className="h-11 text-[15px]"><i className="ri-shield-keyhole-line text-xl" />MCP 授权管理</DropdownMenuItem>
+            <DropdownMenuSeparator className="my-2" />
+            <DropdownMenuItem className="h-11 text-[15px]"><i className="ri-logout-box-r-line text-xl" />退出登录</DropdownMenuItem>
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   </header>;
 }

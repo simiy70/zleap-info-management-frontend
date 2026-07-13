@@ -177,7 +177,6 @@ function AgentProfilePage({ agent, cards, followedIds, onToggleFollow, onBack, r
       <div className="min-w-0 flex-1 pt-3">
         <h2 className="text-[26px] font-bold leading-none">{agent.name}</h2>
         <p className="mt-4 text-sm text-muted-foreground">{agent.desc || agentDescs[agent.name] || '暂无简介'}</p>
-        <div className="mt-3 flex gap-2"><Badge variant="secondary" className="font-normal">{dynamics.length} 条动态</Badge>{agent.meta && <Badge variant="secondary" className="font-normal">{agent.meta}</Badge>}</div>
       </div>
       <div className="flex gap-2 pt-3">
         <Button variant={followed ? 'pill-muted' : 'pill'} className="px-6" onClick={() => onToggleFollow(agent.name)}>{followed ? '已关注' : '关注'}</Button>
@@ -472,7 +471,7 @@ export default function FeedPage({ onNavigate }) {
   };
 
   return <PageShell variant="feed">
-    <GlassHeader title="动态" user={profile.name} />
+    <GlassHeader user={profile.name} />
 
     <div className="mx-auto flex w-full max-w-[1360px] justify-center gap-6 px-6 pt-5">
       {/* 左列：个人中心（二级页面下保持不变） */}

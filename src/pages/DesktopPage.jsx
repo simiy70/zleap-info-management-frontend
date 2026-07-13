@@ -241,7 +241,7 @@ export default function DesktopPage({ onNavigate }) {
   };
 
   return <PageShell variant="desktop">
-    <GlassHeader title="桌面" user={currentUser} />
+    <GlassHeader user={currentUser} />
     <main className={`px-8 pb-32 pt-8 transition-all duration-300 ${chatOpen ? 'xl:mr-[384px]' : ''}`}>
       <div className="mx-auto max-w-[1280px]">
         <h1 className="fade-in-up text-center text-2xl font-bold tracking-tight">{greeting()}，今天想做点什么？</h1>

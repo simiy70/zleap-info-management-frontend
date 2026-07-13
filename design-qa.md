@@ -1,62 +1,58 @@
 **Source visual truth**
 
-- Browser Comments 1–5 marker screenshots in the current task, captured at 1440 × 900.
-- Requested states: Dynamic header, Assistant conversation list, and Desktop with the persistent assistant panel open.
+- Browser Comments for the global header/personal center and Agent detail field removal in the current task.
+- Additional user reference image for the expanded personal-center menu.
+- Reference viewports: 1440 × 900 and 1344 × 850 desktop browser surfaces.
 
 **Implementation evidence**
 
-- Desktop result: `docs/design-qa/desktop-annotation-text-updates.png`
-- Assistant result: `docs/design-qa/assistant-without-notification-center.png`
-- Viewport: 1440 × 900 desktop in-app browser surface.
-- States: Desktop with assistant panel open; Assistant → Conversation with Feishu CLI selected.
+- Expanded personal center: `docs/design-qa/header-personal-center-open.png`
+- Agent detail after field removal: `docs/design-qa/agent-detail-fields-removed.png`
+- States: Desktop with personal center open; Dynamic → followed Agent detail.
 
 **Full-view comparison evidence**
 
-- The shared top header no longer renders the annotated search action; notification, help, account, and plan controls remain aligned.
-- The Assistant conversation list now starts with Feishu CLI and no longer contains the Notification Center session.
-- The Desktop assistant panel now uses `Zhang Wei的Agent`, the hero greeting no longer references Agent, and the initial assistant message uses the requested “专属助手” copy.
-- All unannotated layout, card content, navigation, colors, and interactions remain unchanged.
+- The shared header now contains language, help, notification, avatar, user name, and an expand/collapse chevron.
+- The expanded personal center shows avatar, name/edit affordance, phone number, account settings, invite, app download, MCP authorization, and logout.
+- Shared module labels such as “桌面”, “助手”, “任务”, and “动态” are no longer rendered beside the Beta badge.
+- The Agent detail hero no longer renders the “1 条动态 / 3 天未更新” badge row; the surrounding hero, tabs, sidebar, and feed remain unchanged.
 
 **Focused region comparison evidence**
 
-- Separate focused crops were not required because the annotated header, conversation list, hero line, assistant title, and initial message are all legible in the two full 1440 × 900 captures.
-- DOM verification confirmed the shared-header search button count is zero and the conversation list contains Feishu CLI but not Notification Center.
+- The header screenshot captures the trigger and the complete opaque dropdown above the fixed assistant panel.
+- The Agent detail screenshot captures the hero from the top of the page and confirms the deleted field leaves clean spacing before the tabs.
+- Scoped DOM checks confirm the Agent detail `<main>` contains zero exact matches for both removed labels.
 
 **Findings**
 
-- No actionable P0/P1/P2 visual or interaction mismatch remains for the five annotations.
-- Fonts and typography: existing font family, weights, line heights, truncation, and hierarchy are preserved; only requested copy changed.
-- Spacing and layout rhythm: removing the header search action correctly closes the gap inside the existing flex group; no manual spacing override was introduced.
-- Colors and visual tokens: unchanged across the header, assistant list, desktop hero, and assistant panel.
-- Image quality and asset fidelity: all existing icons and avatar assets are preserved; no replacement or generated asset was needed.
-- Copy and content: all requested removals and replacements are present. `xxx的Agent` is resolved from the current displayed user, producing `Zhang Wei的Agent`.
+- No actionable P0/P1/P2 visual or interaction mismatch remains.
+- Typography: existing font family, hierarchy, truncation, and weights are preserved.
+- Spacing: the removed module label and Agent badge row collapse through the existing flex layout without manual offsets.
+- Layering: the global header is raised above the fixed desktop assistant so the personal-center menu is never obscured.
+- Colors: the dropdown uses an opaque white surface and the existing shadow, border, icon, and muted-text tokens.
+- Image quality: existing avatar fallbacks and feed imagery are preserved; no new raster asset was required.
 
 **Primary interactions tested**
 
-- Verify the shared top header contains no Search button.
-- Navigate from Desktop to Assistant.
-- Open the Conversation view and verify Notification Center is absent while Feishu CLI remains active.
-- Return to Desktop and verify the assistant name, hero greeting, and initial assistant message.
-- Console checked: no new errors were produced by Desktop or Assistant validation. The tab retained two earlier, unrelated nested-button warnings from the Information Sources report view (timestamp 10:41:01); those predate and fall outside these annotations.
+- Open the personal center from the shared header and verify all requested menu items are visible.
+- Close the menu and navigate from Desktop to Dynamic.
+- Verify the Dynamic shared header also omits its module label.
+- Open “硅谷早报 Agent” from My Following and verify the two annotated fields are absent from the detail hero.
+- Console checked after final states: no page errors were produced.
 
 **Comparison history**
 
-- Earlier state: Search rendered in the shared header; Notification Center was the first conversation; the Desktop used “超级助手” and Agent-focused hero copy.
-- Fixes: removed the shared header Search action and Notification Center data item; derived the assistant name from the current user; replaced the two annotated Desktop strings.
-- Post-fix evidence: the two screenshots above and DOM checks show all five annotations applied with no actionable P0/P1/P2 findings.
-
-**Follow-up polish**
-
-- None required for this scoped annotation set.
+- Earlier state: header displayed a page-specific module label and a compact user/plan block; Agent detail displayed dynamic-count and stale-update badges.
+- Fixes: moved identity actions into a click-to-expand personal center, removed title rendering from the shared header, and removed the Agent detail badge row.
+- Post-fix evidence: both screenshots and scoped DOM checks above show the requested states.
 
 **Implementation checklist**
 
-- [x] Shared-header Search button removed.
-- [x] Notification Center conversation removed.
-- [x] Desktop assistant renamed to the current user's Agent.
-- [x] Hero greeting no longer mentions Agent.
-- [x] Initial assistant message uses the requested dedicated-assistant copy.
+- [x] Personal center trigger and dropdown implemented.
+- [x] Dropdown remains above the fixed assistant panel.
+- [x] Shared module names removed across Desktop, Assistant, Task, and Dynamic pages.
+- [x] Agent detail dynamic-count and stale-update row removed.
 - [x] Production build passes.
-- [x] Browser-rendered states verified.
+- [x] Browser-rendered states and console verified.
 
 final result: passed
