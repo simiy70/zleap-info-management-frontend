@@ -1,60 +1,62 @@
 **Source visual truth**
 
-- Browser Comment 1 marker screenshot in the current task, captured at 1344 × 850.
-- Annotation target: the My Information Sources card grid.
-- Requested outcome: one row must provide six card slots at the annotated desktop viewport.
+- Browser Comments 1–5 marker screenshots in the current task, captured at 1440 × 900.
+- Requested states: Dynamic header, Assistant conversation list, and Desktop with the persistent assistant panel open.
 
 **Implementation evidence**
 
-- Browser-rendered full view: `docs/design-qa/sources-six-column.png`
-- Viewport: 1344 × 850 desktop in-app browser surface.
-- State: Information Sources → My Information Sources → card view, default scroll position.
-- Computed grid: six equal columns (`193.328px 193.328px 193.328px 193.344px 193.328px 193.328px`) across a 1280px content grid.
+- Desktop result: `docs/design-qa/desktop-annotation-text-updates.png`
+- Assistant result: `docs/design-qa/assistant-without-notification-center.png`
+- Viewport: 1440 × 900 desktop in-app browser surface.
+- States: Desktop with assistant panel open; Assistant → Conversation with Feishu CLI selected.
 
 **Full-view comparison evidence**
 
-- The source showed the annotated card region using four columns at 1344px.
-- The revised browser capture shows the create card and three current folder cards occupying the first four positions of a six-column row, with two reserved positions available for additional cards.
-- Navigation, actions, card styling, assets, text hierarchy, and page spacing outside the grid remain unchanged.
+- The shared top header no longer renders the annotated search action; notification, help, account, and plan controls remain aligned.
+- The Assistant conversation list now starts with Feishu CLI and no longer contains the Notification Center session.
+- The Desktop assistant panel now uses `Zhang Wei的Agent`, the hero greeting no longer references Agent, and the initial assistant message uses the requested “专属助手” copy.
+- All unannotated layout, card content, navigation, colors, and interactions remain unchanged.
 
 **Focused region comparison evidence**
 
-- A separate crop was not required because the selected grid and all four rendered cards are clearly readable in the full 1344 × 850 capture.
-- Browser measurements confirm all rendered cards share the same y-coordinate (`193`) and width (`193px`), proving they occupy one six-track row without wrapping.
+- Separate focused crops were not required because the annotated header, conversation list, hero line, assistant title, and initial message are all legible in the two full 1440 × 900 captures.
+- DOM verification confirmed the shared-header search button count is zero and the conversation list contains Feishu CLI but not Notification Center.
 
 **Findings**
 
-- No actionable P0/P1/P2 visual or interaction mismatch remains.
-- Fonts and typography: unchanged; labels, counts, weights, line heights, and wrapping match the existing card design.
-- Spacing and layout rhythm: the large-screen breakpoint now uses six equal columns while retaining the existing 24px horizontal gap and 40px row gap; small and medium breakpoints remain two and three columns.
-- Colors and visual tokens: unchanged; neutral create card and orange folder assets retain their existing tokens and contrast.
-- Image quality and asset fidelity: existing folder image assets are reused at their original rendering size without scaling artifacts or replacement assets.
-- Copy and content: unchanged; only the responsive column count was modified.
+- No actionable P0/P1/P2 visual or interaction mismatch remains for the five annotations.
+- Fonts and typography: existing font family, weights, line heights, truncation, and hierarchy are preserved; only requested copy changed.
+- Spacing and layout rhythm: removing the header search action correctly closes the gap inside the existing flex group; no manual spacing override was introduced.
+- Colors and visual tokens: unchanged across the header, assistant list, desktop hero, and assistant panel.
+- Image quality and asset fidelity: all existing icons and avatar assets are preserved; no replacement or generated asset was needed.
+- Copy and content: all requested removals and replacements are present. `xxx的Agent` is resolved from the current displayed user, producing `Zhang Wei的Agent`.
 
 **Primary interactions tested**
 
-- Navigate from Desktop to Information Sources.
-- Open My Information Sources in card view.
-- Verify the computed grid exposes six columns at 1344 × 850.
-- Verify current cards remain on one row and preserve their existing actions.
-- Browser console errors checked: none.
+- Verify the shared top header contains no Search button.
+- Navigate from Desktop to Assistant.
+- Open the Conversation view and verify Notification Center is absent while Feishu CLI remains active.
+- Return to Desktop and verify the assistant name, hero greeting, and initial assistant message.
+- Console checked: no new errors were produced by Desktop or Assistant validation. The tab retained two earlier, unrelated nested-button warnings from the Information Sources report view (timestamp 10:41:01); those predate and fall outside these annotations.
 
 **Comparison history**
 
-- Earlier finding: the annotated 1344px layout resolved to four columns (`lg:grid-cols-4`), which did not meet the six-card row requirement.
-- Fix: changed the large-screen grid breakpoint to `lg:grid-cols-6` and removed the redundant `2xl` override.
-- Post-fix evidence: `docs/design-qa/sources-six-column.png`; computed style reports six equal grid tracks and no actionable P0/P1/P2 findings remain.
+- Earlier state: Search rendered in the shared header; Notification Center was the first conversation; the Desktop used “超级助手” and Agent-focused hero copy.
+- Fixes: removed the shared header Search action and Notification Center data item; derived the assistant name from the current user; replaced the two annotated Desktop strings.
+- Post-fix evidence: the two screenshots above and DOM checks show all five annotations applied with no actionable P0/P1/P2 findings.
 
 **Follow-up polish**
 
-- None required for this scoped layout annotation.
+- None required for this scoped annotation set.
 
 **Implementation checklist**
 
-- [x] Six card slots render per row at the annotated desktop viewport.
-- [x] Two- and three-column responsive behavior remains for smaller viewports.
-- [x] Existing card content, assets, and interactions remain unchanged.
+- [x] Shared-header Search button removed.
+- [x] Notification Center conversation removed.
+- [x] Desktop assistant renamed to the current user's Agent.
+- [x] Hero greeting no longer mentions Agent.
+- [x] Initial assistant message uses the requested dedicated-assistant copy.
 - [x] Production build passes.
-- [x] Browser-rendered layout and console are verified.
+- [x] Browser-rendered states verified.
 
 final result: passed

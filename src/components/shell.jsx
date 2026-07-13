@@ -22,7 +22,6 @@ export function GlassHeader({ title, user = 'Zhang Wei', plan = '企业版' }) {
       {title && <span className="ml-1 text-sm font-semibold text-muted-foreground">{title}</span>}
     </div>
     <div className="flex items-center gap-4 text-[20px] text-muted-foreground">
-      <button className="transition hover:text-foreground" title="搜索" aria-label="搜索"><i className="ri-search-line" /></button>
       <button className="relative transition hover:text-foreground" title="通知" aria-label="通知"><i className="ri-notification-3-line" /><span className="absolute right-0 top-0 h-1.5 w-1.5 rounded-full bg-rose-500" /></button>
       <button className="transition hover:text-foreground" title="帮助" aria-label="帮助"><i className="ri-question-line" /></button>
       <div className="ml-1 flex items-center gap-2.5">

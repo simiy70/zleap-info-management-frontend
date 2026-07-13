@@ -36,7 +36,6 @@ const assistants = [
 
 /* ─── 对话数据 ─── */
 const chatSessions = [
-  { id: 100, name: "通知中心",   avatarKind: "bell",  time: "15:15",     preview: "报告 \"暂无数据\" 生成失败", unread: true  },
   { id: 101, name: "飞书CLI",    avatarKind: "cli",   time: "15:05",     preview: "收到。全景梳理与核心结论已就…", unread: false },
   { id: 102, name: "搜索引擎",   avatarKind: "grape", time: "15:03",     preview: "✅ 任务终结·档案封存确认 收…", unread: true  },
   { id: 103, name: "哦i皮",      avatarKind: "man1",  time: "三天前",    preview: "1", unread: false },
@@ -540,4 +539,3 @@ export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
     </PageShell>
   );
 }
-
