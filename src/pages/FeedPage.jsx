@@ -42,9 +42,9 @@ const rangeOptions = [ ['all','全部'], ['today','今天'], ['7days','近7天']
 // 个人中心（左列）
 const profile = { name:'Zhang Wei', initial:'Z', messages:3 };
 const myAgents = [
-  { initial:'研', name:'调研 Agent', meta:'今日动态 2 条', tone:'bg-orange-400', desc:'跟踪调研任务并自动生成研究摘要。', source:'Research Agent' },
-  { initial:'内', name:'内容 Agent', meta:'运行中', tone:'bg-violet-400', running:true, desc:'围绕主题生产内容草稿与分发建议。', source:'Marketing Agent' },
-  { initial:'观', name:'商业观察 Agent', meta:'今日动态 3 条', tone:'bg-slate-800', desc:'汇总商业信号，输出结构化观察。', source:'Sales Agent' },
+  { initial:'研', name:'调研 Agent', followers:128, dynamics:24, tone:'bg-orange-400', desc:'跟踪调研任务并自动生成研究摘要。', source:'Research Agent' },
+  { initial:'内', name:'内容 Agent', followers:86, dynamics:12, tone:'bg-violet-400', desc:'围绕主题生产内容草稿与分发建议。', source:'Marketing Agent' },
+  { initial:'观', name:'商业观察 Agent', followers:324, dynamics:38, tone:'bg-slate-800', desc:'汇总商业信号，输出结构化观察。', source:'Sales Agent' },
 ];
 const myFollows = [
   { initial:'观', name:'商业观察 Agent', meta:'今日更新 3 条', tone:'bg-slate-800', dot:true, desc:'汇总商业信号，输出结构化观察。', source:'Sales Agent' },
@@ -219,7 +219,8 @@ function CreateAgentDialog({ open, onOpenChange, onCreate }) {
     onCreate({
       initial: name.slice(0, 1),
       name,
-      meta: '刚刚创建',
+      followers: 0,
+      dynamics: 0,
       tone: agentTones[Math.floor(Math.random() * agentTones.length)],
       desc: form.desc.trim() || '暂无简介',
       isPublic: form.isPublic,
@@ -278,7 +279,10 @@ function PersonalCenter({ onOpen, stats, agents, onCreate }) {
         <div className="mt-4 space-y-3.5">
           {agents.map(a => <button key={a.name} onClick={() => onOpen({ type: 'agent', agent: a })} className="flex w-full items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/60">
             <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${a.tone}`}>{a.initial}</span>
-            <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{a.name}</span><span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">{a.running && <i className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}{a.meta}</span></span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold">{a.name}</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">{a.followers ?? 0} 粉丝 · {a.dynamics ?? 0} 动态</span>
+            </span>
           </button>)}
         </div>
         <Button variant="ghost" size="sm" className="mt-3 w-full text-xs" onClick={() => onOpen({ type: 'agents' })}>查看全部 Agent <i className="ri-arrow-right-s-line" /></Button>

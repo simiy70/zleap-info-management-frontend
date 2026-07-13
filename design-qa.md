@@ -1,58 +1,58 @@
 **Source visual truth**
 
-- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-62a195b4-6443-40c4-90d9-5e7c2174fb18.png`
+- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-60321154-af26-4e5b-8e55-6f13d37d1c79.png`
+- The supplied screenshot defines the card layout and visual hierarchy; the user's requested field list (avatar, name, follower count, dynamic count) supersedes the screenshot's old status/update copy.
 
 **Implementation evidence**
 
-- My information sources: `/tmp/zleap-folder-cards-final.png`
-- Shared information sources: `/tmp/zleap-folder-cards-shared.png`
-- Side-by-side comparison: `/tmp/zleap-folder-cards-comparison.jpg`
-- Viewport: desktop in-app browser surface, 1024 × 512 capture.
-- State: information source module, card view, own and shared tabs.
+- Browser-rendered full view: `docs/design-qa/feed-agent-card.png`
+- Browser-rendered focused card region: `docs/design-qa/feed-agent-card-focused.png`
+- Viewport: 1440 × 900 desktop in-app browser surface (captured output 1425 × 891 after browser chrome).
+- State: Dynamic page, Discover feed, default scroll position, My Agent card visible.
 
 **Full-view comparison evidence**
 
-- The implementation uses the reference hierarchy: a dashed create tile followed by centered folder assets, count metadata, two-line names, generous column gaps, and a white card-view canvas.
-- Upload and connector actions use the reference's dark filled treatment while the existing product secondary navigation and dock remain intact.
+- The Dynamic page retains the reference's left-column card placement, card width, header/create action, three-row Agent list, and centered “View all Agents” action.
+- The requested metadata now reads `128 粉丝 · 24 动态`, `86 粉丝 · 12 动态`, and `324 粉丝 · 38 动态` without changing the surrounding feed layout.
 
 **Focused region comparison evidence**
 
-- Folder assets: own content uses orange; shared/enterprise content uses blue; restricted own content uses the orange locked variant.
-- Card metadata: the count is muted and centered above the stronger folder name, matching the reference hierarchy and wrapping behavior.
-- Create tile: dashed neutral border, centered plus icon, quiet label, and orange hover treatment match the supplied state.
+- The source image and focused browser capture were opened together for comparison.
+- Avatar size, name hierarchy, row rhythm, muted secondary type, header alignment, and footer action remain consistent with the source card.
+- A focused crop was required because the full desktop view renders the left card at a smaller scale than the supplied detail screenshot.
 
 **Findings**
 
 - No actionable P0/P1/P2 visual or interaction mismatch remains.
-- Fonts and typography: existing product font, compact 12px metadata, 14px semibold names, centered alignment, and two-line truncation match the target density.
-- Spacing and layout rhythm: responsive 2/3/4/6-column grid, large horizontal and vertical gaps, icon-to-count spacing, and tile height reproduce the reference structure while adapting to the smaller test viewport.
-- Colors and visual tokens: orange denotes owned content, blue denotes shared content, and the lock treatment communicates restricted permission; dark toolbar actions and neutral canvas align with the reference.
-- Image quality and asset fidelity: three dedicated 256px RGBA folder assets were generated for the workspace, chroma-key backgrounds were removed, and the icons render sharply without placeholder or CSS-drawn folder art.
-- Copy and content: create label, folder counts, and existing source names are preserved.
+- Fonts and typography: the existing product font, name weight, secondary-text size/line height, truncation behavior, and hierarchy are preserved.
+- Spacing and layout rhythm: card padding, row gaps, avatar-to-copy gap, header spacing, radii, and vertical rhythm match the existing Dynamic page design.
+- Colors and visual tokens: existing orange, violet, and slate avatar treatments and muted metadata token are preserved; contrast remains clear.
+- Image quality and asset fidelity: the existing Agent avatar treatments remain sharp at their rendered size; no placeholder or newly approximated asset was introduced.
+- Copy and content: every My Agent row now contains exactly the requested fields—avatar, name, follower count, and dynamic count. Old “today update” and “running” metadata is removed from this card only.
 
 **Primary interactions tested**
 
-- Open the information source module in card view.
-- Open permission settings from a locked folder and verify the correct folder/count context.
-- Switch to shared information sources and verify the blue folder treatment.
+- Navigate from Desktop to Dynamic.
+- Verify all three My Agent rows expose the new follower/dynamic metadata.
+- Open the Research Agent row and verify its profile still opens correctly.
+- Return to the Dynamic feed and verify the updated card remains visible.
 - Browser console errors checked: none.
 
 **Comparison history**
 
-- Initial comparison found the card-view canvas and action buttons too subdued compared with the reference.
-- Fix: changed the card-view canvas to white and applied dark filled styling to upload/connector actions.
-- Post-fix evidence: `/tmp/zleap-folder-cards-final.png`; no actionable P0/P1/P2 findings remain.
+- Initial implementation pass replaced the mixed status/update metadata with explicit follower and dynamic counts while preserving the reference card structure.
+- Post-change visual comparison found no actionable P0/P1/P2 differences; no additional visual fix iteration was required.
 
 **Follow-up polish**
 
-- P3: the reference contains enough folders to demonstrate pagination; the current prototype data has only four top-level sources, so pagination is intentionally not shown.
+- None required for this scoped field change.
 
 **Implementation checklist**
 
-- [x] Folder-style card grid implemented.
-- [x] Ownership and permission treatments are distinguishable.
-- [x] Create, open, permission, and context-menu interactions are preserved.
+- [x] Existing Agent rows include follower and dynamic count data.
+- [x] Newly created Agents default to 0 followers and 0 dynamics.
+- [x] Existing Agent-card navigation remains functional.
 - [x] Production build passes.
-- [x] Browser-rendered states and console are verified.
+- [x] Browser-rendered state and console are verified.
 
 final result: passed
