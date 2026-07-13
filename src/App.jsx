@@ -3,6 +3,9 @@ import AssistantPage from './pages/AssistantPage.jsx';
 import DesktopPage from './pages/DesktopPage.jsx';
 import TaskPage from './pages/TaskPage.jsx';
 import FeedPage from './pages/FeedPage.jsx';
+import folderOrange from './assets/folders/folder-orange.png';
+import folderOrangeLocked from './assets/folders/folder-orange-locked.png';
+import folderBlue from './assets/folders/folder-blue.png';
 
 /* ─── SVG ICONS ─── */
 const Icon = {
@@ -2343,7 +2346,6 @@ function HeaderFilterButton({ filterType, filterStatus, filterPerm, allTypeOptio
 }
 
 function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConfig, folderScopes, onPermissionClick, timeMode = "updated", onCreateNew, folderList = [], crossFolderView = false, syncingIds = new Set() }) {
-  const folderItems = items.filter(i => i.kind === "文件夹");
   // 自动同步开关状态：key=itemId, value=boolean; 默认开启，同步失败的默认关闭
   const [syncStates, setSyncStates] = React.useState(() => {
     const init = {};
@@ -2365,19 +2367,12 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
   const sortedItems = [...items].sort((a, b) => toSortKey(b[timeMode]) - toSortKey(a[timeMode]));
   return (
     <div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
       {onCreateNew && (
         <div onClick={onCreateNew}
-          className="group relative flex cursor-pointer flex-col justify-between rounded-2xl border-2 border-dashed border-neutral-200 bg-white p-4 transition-all hover:border-orange-300 hover:bg-orange-50/20"
-          style={{ minHeight: "128px" }}>
-          <div className="flex items-start justify-between">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 text-neutral-300 transition-colors group-hover:border-orange-400 group-hover:text-orange-400">
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </div>
-          </div>
-          <div>
-            <div className="text-sm font-bold text-neutral-400 transition-colors group-hover:text-orange-500">新建信息源</div>
-          </div>
+          className="group relative flex min-h-[168px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 bg-white/60 text-neutral-300 transition-all hover:border-orange-300 hover:bg-orange-50/20 hover:text-orange-400">
+          <i className="ri-add-line text-[42px] font-light leading-none" />
+          <div className="mt-3 text-sm font-medium transition-colors group-hover:text-orange-500">新建信息源</div>
         </div>
       )}
       {sortedItems.map(item => {
@@ -2387,37 +2382,47 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
         const currentScope = isFolder ? (folderScopes && folderScopes[item.id]) || item.scope : null;
 
         if (isFolder) {
-          const pal = FOLDER_PALETTE[folderItems.indexOf(item) % FOLDER_PALETTE.length];
-          const scopeCfg = currentScope === "enterprise"
-            ? { label: "所有人可见", cls: "bg-white/70 text-emerald-700" }
+          const isOwned = !item.owner || item.owner === CURRENT_USER;
+          const isRestricted = currentScope !== "enterprise";
+          const folderAsset = isOwned
+            ? (isRestricted ? folderOrangeLocked : folderOrange)
+            : folderBlue;
+          const permissionLabel = currentScope === "enterprise"
+            ? "所有人可见"
             : currentScope === "partial"
-            ? { label: "部分可见",   cls: "bg-white/70 text-blue-700" }
-            : { label: "私密",       cls: "bg-white/70 text-neutral-600" };
+            ? "部分可见"
+            : "私密";
           return (
             <div key={item.id} onClick={() => onOpenFolder(item)}
-              className={`group relative flex cursor-pointer flex-col justify-between rounded-2xl p-4 transition-all ${pal.bg}`}
-              style={{ minHeight: "128px" }}>
-              {/* folder icon + context menu */}
-              <div className="flex items-start justify-between">
-                <svg width="38" height="34" viewBox="0 0 24 22" fill="currentColor" className={pal.icon}>
-                  <path d="M20 6h-8l-2-2.5C9.7 3.2 9.3 3 9 3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/>
-                </svg>
+              className="group relative flex min-h-[168px] cursor-pointer flex-col items-center rounded-2xl px-3 py-3 text-center transition hover:bg-white/70 hover:shadow-sm">
+              <div className="absolute right-2 top-2">
                 <button onClick={e => { e.stopPropagation(); onContextMenu(item, e); }}
-                  className="flex h-6 w-6 items-center justify-center rounded-lg text-neutral-500/60 opacity-0 transition group-hover:opacity-100 hover:bg-black/10">
+                  className="flex h-7 w-7 items-center justify-center rounded-lg text-neutral-400 opacity-0 transition group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700"
+                  aria-label={`${item.name}更多操作`}>
                   <Icon.More />
                 </button>
               </div>
-              {/* name + meta */}
-              <div>
-                <div className="truncate text-[14px] font-bold text-neutral-900">{item.name}</div>
-                <div className="mt-1.5 flex items-center justify-between">
-                  <span className="text-[12px] text-neutral-600">{summary.total} 项</span>
+              <div className="relative mt-1 h-[84px] w-[104px] shrink-0 transition-transform duration-200 group-hover:-translate-y-1">
+                <img src={folderAsset} alt="" className="h-full w-full object-contain" />
+                {isRestricted && !isOwned && (
                   <button onClick={e => { e.stopPropagation(); onPermissionClick && onPermissionClick(item.id); }}
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition hover:bg-white/90 ${scopeCfg.cls}`}>
-                    {scopeCfg.label}
+                    title={permissionLabel} aria-label={`${item.name}权限：${permissionLabel}`}
+                    className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-full bg-cyan-200/80 text-cyan-700 shadow-sm transition hover:bg-cyan-100">
+                    <i className="ri-lock-2-line text-base" />
                   </button>
-                </div>
+                )}
+                {isRestricted && isOwned && (
+                  <button onClick={e => { e.stopPropagation(); onPermissionClick && onPermissionClick(item.id); }}
+                    title={permissionLabel} aria-label={`${item.name}权限：${permissionLabel}`}
+                    className="absolute bottom-2 right-2 h-9 w-9 rounded-lg opacity-0 transition group-hover:opacity-100" />
+                )}
               </div>
+              <button onClick={e => { e.stopPropagation(); onPermissionClick && onPermissionClick(item.id); }}
+                title={`权限：${permissionLabel}`}
+                className={`mt-0.5 text-[12px] transition hover:underline ${isOwned ? "text-neutral-400 hover:text-orange-500" : "text-cyan-600/80 hover:text-cyan-700"}`}>
+                {summary.total}项
+              </button>
+              <div className="mt-2 line-clamp-2 max-w-[170px] text-[14px] font-semibold leading-5 text-neutral-900">{item.name}</div>
             </div>
           );
         }
@@ -11149,7 +11154,7 @@ function InfoSourcePage({ onNavigate }) {
             </div>
           ) : (
             <div className="flex flex-1 overflow-hidden">
-              <div className="flex flex-1 flex-col overflow-auto px-8 py-6">
+              <div className={`flex flex-1 flex-col overflow-auto px-8 py-6 ${view === "card" ? "bg-white" : ""}`}>
 
                 {/* Toolbar 行 2：面包屑 + 筛选/上传/连接器 */}
                 <div className="mb-4 flex items-center justify-between gap-3">
@@ -11169,15 +11174,19 @@ function InfoSourcePage({ onNavigate }) {
                   <div className="flex items-center gap-2">
                     {/* 上传文件 / 连接器 */}
                     {((navPage === "mine" && page === "home") || (page !== "home" && currentFolder?.owner === CURRENT_USER)) && (
-                      <div className="flex items-center gap-1 rounded-xl bg-neutral-100/80 p-0.5">
+                      <div className={`flex items-center ${view === "card" ? "gap-3" : "gap-1 rounded-xl bg-neutral-100/80 p-0.5"}`}>
                         <button onClick={openUploadMenu}
-                          className={`flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-sm transition ${showUploadMenu ? "bg-white text-orange-600 shadow-sm" : "text-neutral-600 hover:bg-white hover:text-neutral-800"}`}>
+                          className={`flex items-center gap-1.5 rounded-lg text-sm transition ${view === "card"
+                            ? "h-9 bg-neutral-900 px-4 text-white shadow-sm hover:bg-neutral-800"
+                            : `h-7 px-2.5 ${showUploadMenu ? "bg-white text-orange-600 shadow-sm" : "text-neutral-600 hover:bg-white hover:text-neutral-800"}`}`}>
                           <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                           <span>上传文件</span>
                           <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className={`transition-transform ${showUploadMenu ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
                         </button>
                         <button onClick={() => setShowConnectorPicker(true)}
-                          className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-sm text-neutral-600 transition hover:bg-white hover:text-neutral-800">
+                          className={`flex items-center gap-1.5 rounded-lg text-sm transition ${view === "card"
+                            ? "h-9 bg-neutral-900 px-4 text-white shadow-sm hover:bg-neutral-800"
+                            : "h-7 px-2.5 text-neutral-600 hover:bg-white hover:text-neutral-800"}`}>
                           <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                           <span>连接器</span>
                         </button>

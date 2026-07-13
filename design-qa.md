@@ -1,58 +1,57 @@
 **Source visual truth**
 
-- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-f9510650-5c8f-4429-a67b-965d1b6bb525.png`
-- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-184fcbef-f267-4198-9e08-5c7849a8be98.png`
-- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-8ca14ffe-4d0d-44e7-9eff-b82f657ea8a4.png`
+- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-62a195b4-6443-40c4-90d9-5e7c2174fb18.png`
 
 **Implementation evidence**
 
-- Search landing: `/tmp/zleap-source-search-initial.png`
-- Submitted search and open scope menu: `/tmp/zleap-source-search-result.png`
-- Event detail: `/tmp/zleap-source-search-detail.png`
-- Side-by-side comparison: `/tmp/zleap-source-search-comparison.jpg`
-- Viewport: 1430 × 720 override; the in-app browser capture is displayed at its browser surface scale.
-- State: information source search tab; public scope; submitted query; detail modal.
+- My information sources: `/tmp/zleap-folder-cards-final.png`
+- Shared information sources: `/tmp/zleap-folder-cards-shared.png`
+- Side-by-side comparison: `/tmp/zleap-folder-cards-comparison.jpg`
+- Viewport: desktop in-app browser surface, 1024 × 512 capture.
+- State: information source module, card view, own and shared tabs.
 
 **Full-view comparison evidence**
 
-- The implementation preserves the reference hierarchy: centered title, large orange-outlined query surface, inline scope selector and circular submit action, date-grouped timeline, time rail, event cards, related-item affordance, and centered event-detail modal.
-- The application header, secondary navigation, and persistent product dock remain visible because this is an integrated module rather than a standalone screenshot recreation.
+- The implementation uses the reference hierarchy: a dashed create tile followed by centered folder assets, count metadata, two-line names, generous column gaps, and a white card-view canvas.
+- Upload and connector actions use the reference's dark filled treatment while the existing product secondary navigation and dock remain intact.
 
 **Focused region comparison evidence**
 
-- Search control: border color, 16px radius, field proportions, muted placeholder, scope menu placement, and amber action match the reference closely.
-- Timeline cards: title/body/source/related-count hierarchy, warm white surface, subtle border/shadow, left time rail, and vertical rhythm match the existing information-source matter view.
-- Detail modal: overlay strength, width, header divider, tag row, summary surface, source reference row, centered article title, and scrollable content match the supplied detail state.
+- Folder assets: own content uses orange; shared/enterprise content uses blue; restricted own content uses the orange locked variant.
+- Card metadata: the count is muted and centered above the stronger folder name, matching the reference hierarchy and wrapping behavior.
+- Create tile: dashed neutral border, centered plus icon, quiet label, and orange hover treatment match the supplied state.
 
 **Findings**
 
 - No actionable P0/P1/P2 visual or interaction mismatch remains.
-- Fonts and typography: the existing product font stack, weights, line heights, and truncation are consistent with the supplied screens and current information-source UI.
-- Spacing and layout rhythm: central content width, search-to-timeline spacing, card padding, rail alignment, radii, and modal spacing are consistent at the tested desktop viewport.
-- Colors and visual tokens: neutral surfaces, amber/orange accents, muted metadata, borders, overlay, and shadows align with the reference and existing product tokens.
-- Image quality and asset fidelity: the reference contains no raster imagery requiring generation; UI icons use the installed Remix Icon set or existing product icons.
-- Copy and content: the search prompt, scope options, event-card structure, reference labels, and detail content follow the supplied examples.
+- Fonts and typography: existing product font, compact 12px metadata, 14px semibold names, centered alignment, and two-line truncation match the target density.
+- Spacing and layout rhythm: responsive 2/3/4/6-column grid, large horizontal and vertical gaps, icon-to-count spacing, and tile height reproduce the reference structure while adapting to the smaller test viewport.
+- Colors and visual tokens: orange denotes owned content, blue denotes shared content, and the lock treatment communicates restricted permission; dark toolbar actions and neutral canvas align with the reference.
+- Image quality and asset fidelity: three dedicated 256px RGBA folder assets were generated for the workspace, chroma-key backgrounds were removed, and the icons render sharply without placeholder or CSS-drawn folder art.
+- Copy and content: create label, folder counts, and existing source names are preserved.
 
 **Primary interactions tested**
 
-- Open information source module and select the first secondary menu item.
-- Open and close the search-scope menu.
-- Submit a query with Enter and verify the matching matter list.
-- Open an event detail modal and verify the detail content.
+- Open the information source module in card view.
+- Open permission settings from a locked folder and verify the correct folder/count context.
+- Switch to shared information sources and verify the blue folder treatment.
 - Browser console errors checked: none.
 
 **Comparison history**
 
-- Initial comparison: no P0/P1/P2 findings. No visual fix iteration was required after the first browser-rendered comparison.
+- Initial comparison found the card-view canvas and action buttons too subdued compared with the reference.
+- Fix: changed the card-view canvas to white and applied dark filled styling to upload/connector actions.
+- Post-fix evidence: `/tmp/zleap-folder-cards-final.png`; no actionable P0/P1/P2 findings remain.
 
 **Follow-up polish**
 
-- P3: the persistent product dock partially overlaps lower timeline content at short browser heights; this is existing global-shell behavior and is outside this module's requested scope.
+- P3: the reference contains enough folders to demonstrate pagination; the current prototype data has only four top-level sources, so pagination is intentionally not shown.
 
 **Implementation checklist**
 
-- [x] Search entry is first in the information-source secondary menu.
-- [x] Search landing, scope selector, query submission, matter results, related-item expansion, and event detail are interactive.
+- [x] Folder-style card grid implemented.
+- [x] Ownership and permission treatments are distinguishable.
+- [x] Create, open, permission, and context-menu interactions are preserved.
 - [x] Production build passes.
 - [x] Browser-rendered states and console are verified.
 
