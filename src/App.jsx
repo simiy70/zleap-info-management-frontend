@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import AssistantPage from './pages/AssistantPage.jsx';
 import DesktopPage from './pages/DesktopPage.jsx';
 import TaskPage from './pages/TaskPage.jsx';
+import FeedPage from './pages/FeedPage.jsx';
 
 /* ─── SVG ICONS ─── */
 const Icon = {
@@ -11408,7 +11409,7 @@ function App() {
   const [primaryPage, setPrimaryPage] = useState("desktop");
   const [assistantPrompt, setAssistantPrompt] = useState("");
   const navigate = (page, payload) => {
-    if (["desktop", "sources", "assistant", "tasks"].includes(page)) {
+    if (["desktop", "sources", "assistant", "tasks", "feed"].includes(page)) {
       if (page === "assistant") setAssistantPrompt(payload?.prompt || "");
       setPrimaryPage(page);
     }
@@ -11417,6 +11418,7 @@ function App() {
   if (primaryPage === "desktop") return <DesktopPage onNavigate={navigate} />;
   if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} initialPrompt={assistantPrompt} />;
   if (primaryPage === "tasks") return <TaskPage onNavigate={navigate} />;
+  if (primaryPage === "feed") return <FeedPage onNavigate={navigate} />;
   return <InfoSourcePage onNavigate={navigate} />;
 }
 
