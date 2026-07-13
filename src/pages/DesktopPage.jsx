@@ -40,6 +40,8 @@ const sourceRows = [
 ];
 
 const quickPrompts = ['帮我盯竞品动态', '总结这周的信息源', '派个活给 Claude Code'];
+const currentUser = 'Zhang Wei';
+const desktopAssistantName = `${currentUser}的Agent`;
 
 function greeting() {
   const hour = new Date().getHours();
@@ -179,10 +181,10 @@ function ChatDock({ open, onToggle, messages, onSend, pending }) {
   };
 
   if (!open) {
-    return <button onClick={onToggle} title="展开超级助手"
+    return <button onClick={onToggle} title={`展开${desktopAssistantName}`}
       className="glass-strong fixed right-0 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2 rounded-l-2xl px-2.5 py-4 shadow-xl transition hover:pr-4">
       <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-lg text-primary-foreground"><i className="ri-sparkling-2-line" /></span>
-      <span className="text-xs font-medium tracking-wider text-secondary-foreground" style={{ writingMode: 'vertical-rl' }}>超级助手</span>
+      <span className="text-xs font-medium tracking-wider text-secondary-foreground" style={{ writingMode: 'vertical-rl' }}>{desktopAssistantName}</span>
     </button>;
   }
 
@@ -190,7 +192,7 @@ function ChatDock({ open, onToggle, messages, onSend, pending }) {
     <header className="flex items-center justify-between border-b border-border/40 px-4 py-3">
       <div className="flex items-center gap-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground"><i className="ri-sparkling-2-line" /></span>
-        <div><div className="text-sm font-semibold leading-tight">超级助手</div><div className="text-[11px] leading-tight text-muted-foreground">调度 Agent · 常驻桌面</div></div>
+        <div><div className="text-sm font-semibold leading-tight">{desktopAssistantName}</div><div className="text-[11px] leading-tight text-muted-foreground">调度 Agent · 常驻桌面</div></div>
       </div>
       <Button variant="ghost" size="icon-sm" onClick={onToggle} title="收起" aria-label="收起对话框"><i className="ri-contract-right-line" /></Button>
     </header>
@@ -220,7 +222,7 @@ function ChatDock({ open, onToggle, messages, onSend, pending }) {
 export default function DesktopPage({ onNavigate }) {
   const [chatOpen, setChatOpen] = useState(true);
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: `${greeting()}，我是超级助手。直接布置任务，我会调度合适的 Agent 完成，进度同步到「任务中心」。` },
+    { role: 'assistant', text: `${greeting()}，我是你的专属助手。直接布置任务，我会调度合适的 Agent 完成，进度同步到「任务中心」。` },
   ]);
   const [pending, setPending] = useState(false);
   const replyTimer = useRef(null);
@@ -239,10 +241,10 @@ export default function DesktopPage({ onNavigate }) {
   };
 
   return <PageShell variant="desktop">
-    <GlassHeader title="桌面" />
+    <GlassHeader user={currentUser} />
     <main className={`px-8 pb-32 pt-8 transition-all duration-300 ${chatOpen ? 'xl:mr-[384px]' : ''}`}>
       <div className="mx-auto max-w-[1280px]">
-        <h1 className="fade-in-up text-center text-2xl font-bold tracking-tight">{greeting()}，今天想让 Agent 做点什么？</h1>
+        <h1 className="fade-in-up text-center text-2xl font-bold tracking-tight">{greeting()}，今天想做点什么？</h1>
         <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
           {[TaskCard, InsightCard, AgentListCard, SourceStatusCard].map((CardComp, index) => <div key={index} className="fade-in-up" style={{ animationDelay: `${0.08 * (index + 1)}s` }}><CardComp onNavigate={onNavigate} /></div>)}
         </div>
