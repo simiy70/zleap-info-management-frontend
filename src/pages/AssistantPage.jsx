@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { PageShell, GlassHeader, GlassDock } from '../components/shell';
 
 /* ─── SVG ICONS ─── */
 const Icon = {
@@ -451,37 +452,17 @@ export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
   }, [subTab, search, customAssistants]);
 
   return (
-    <div className="min-h-screen bg-[#f5f4f1] text-neutral-900">
+    <PageShell>
       <div className="flex min-h-screen flex-col">
 
         {/* ── Header：logo + user ── */}
-        <header className="flex h-14 shrink-0 items-center justify-between gap-6 border-b border-neutral-200/60 bg-[#efede9] px-6">
-          <div className="flex items-center gap-2">
-            <div className="shrink-0 text-xl font-bold tracking-tight">zleap</div>
-            <span className="rounded-md bg-white/70 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">Beta</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-4">
-            <button className="text-neutral-500 transition hover:text-neutral-900" title="语言"><Icon.Lang /></button>
-            <button className="text-neutral-500 transition hover:text-neutral-900" title="帮助"><Icon.Help /></button>
-            <button className="relative text-neutral-500 transition hover:text-neutral-900" title="通知">
-              <Icon.Bell />
-              <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-[#efede9]" />
-            </button>
-            <div className="ml-1 flex items-center gap-2.5">
-              <div className="text-right">
-                <div className="text-sm font-medium leading-tight text-neutral-700">这里最…</div>
-                <div className="text-[11px] leading-tight text-neutral-400">企业版</div>
-              </div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">Z</div>
-            </div>
-          </div>
-        </header>
+        <GlassHeader title="助手" />
 
         {/* ── Main ── */}
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
 
           {/* 二级菜单：左边视图 tab + 右边子筛选/搜索/创建 */}
-          <div className="flex shrink-0 items-center gap-4 border-b border-neutral-200/60 bg-white px-8 py-2.5">
+          <div className="glass-soft flex shrink-0 items-center gap-4 border-x-0 border-t-0 px-8 py-2.5">
             {/* 左：视图 tab（对话 / 助手管理） */}
             <nav className="flex shrink-0 items-center gap-1">
               {VIEW_TABS.map(t => (
@@ -532,7 +513,7 @@ export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
 
           {/* 助手管理分类标签 */}
           {viewMode === "management" && (
-            <nav className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-neutral-200/60 bg-[#f5f4f1] px-8 py-3 no-scrollbar">
+            <nav className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-neutral-200/40 px-8 py-3 no-scrollbar">
               {SUB_TABS.map(s => (
                 <button key={s.id} onClick={() => setSubTab(s.id)}
                   className={`flex h-9 shrink-0 items-center rounded-full border px-5 text-sm font-medium transition ${subTab === s.id ? "border-orange-500 bg-orange-500 text-white shadow-sm shadow-orange-500/20" : "border-neutral-200 bg-white text-neutral-600 hover:border-orange-200 hover:text-orange-600"}`}>
@@ -552,48 +533,11 @@ export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
       </div>
 
       {/* ── 一级菜单：底部悬浮 dock（磨玻璃） ── */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center">
-        <nav className="pointer-events-auto flex items-end gap-1 rounded-3xl border border-white/60 bg-white/55 px-3 py-2.5 shadow-xl shadow-neutral-900/10 backdrop-blur-xl">
-          {[
-            { id: "desktop", label: "桌面", iconBg: "bg-orange-100", iconColor: "text-orange-500",
-              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg> },
-            { id: "sources", label: "信息源",
-              iconBg: "bg-violet-100", iconColor: "text-violet-600",
-              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="2.6"/><path d="M4 5v6c0 1.44 3.58 2.6 8 2.6s8-1.16 8-2.6V5"/><path d="M4 11v6c0 1.44 3.58 2.6 8 2.6s8-1.16 8-2.6v-6"/></svg> },
-            { id: "assistant", label: "助手", active: true,
-              iconBg: "bg-emerald-100", iconColor: "text-emerald-600",
-              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg> },
-            { id: "tasks", label: "任务",
-              iconBg: "bg-blue-100", iconColor: "text-blue-600",
-              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><polyline points="8.5 12.5 11 15 15.8 10"/></svg> },
-            { id: "feed", label: "动态",
-              iconBg: "bg-rose-100", iconColor: "text-rose-500",
-              icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.4"/></svg> },
-          ].map(item => (
-            <button key={item.id} onClick={() => onNavigate?.(item.id)}
-              className={`group flex w-16 flex-col items-center gap-1 rounded-2xl px-1.5 py-1.5 transition-colors ${item.active ? "bg-white/60" : "hover:bg-white/50"}`}>
-              <span className="relative">
-                <span className={`flex h-11 w-11 items-center justify-center rounded-[14px] ${item.iconBg} ${item.iconColor} transition-transform group-hover:scale-[1.04] group-active:scale-95`}>
-                  {item.icon}
-                </span>
-                {item.badge?.type === "count" && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white/80">
-                    {item.badge.value}
-                  </span>
-                )}
-                {item.badge?.type === "dot" && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-orange-500 ring-2 ring-white/80" />
-                )}
-              </span>
-              <span className={`text-[11px] leading-none ${item.active ? "font-medium text-neutral-800" : "text-neutral-500"}`}>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
+      <GlassDock active="assistant" onNavigate={onNavigate} />
 
       {/* 创建助手弹窗 */}
       {showCreate && <CreateAssistantModal onClose={() => setShowCreate(false)} onCreate={handleCreate} />}
-    </div>
+    </PageShell>
   );
 }
 

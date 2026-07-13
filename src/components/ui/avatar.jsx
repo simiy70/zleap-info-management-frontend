@@ -1,0 +1,17 @@
+import React from 'react';
+import { cn } from '../../lib/utils';
+
+const Avatar = React.forwardRef(({ className, ...props }, ref) => (
+  <span ref={ref} className={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted', className)} {...props} />
+));
+Avatar.displayName = 'Avatar';
+
+const AvatarImage = ({ className, ...props }) => (
+  <img className={cn('aspect-square h-full w-full object-cover', className)} alt="" {...props} />
+);
+
+const AvatarFallback = ({ className, ...props }) => (
+  <span className={cn('flex h-full w-full items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground', className)} {...props} />
+);
+
+export { Avatar, AvatarImage, AvatarFallback };
