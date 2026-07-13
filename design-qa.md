@@ -1,52 +1,59 @@
-# Desktop Design QA
+**Source visual truth**
 
-- source visual truth: `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-7b3f05a9-3e95-4751-8e59-190143b6b4a1.png` and `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-9a9815b4-64d0-4015-9c61-13a89267ac4c.png`
-- implementation screenshots: `/Users/mac/Documents/Zleap-web/docs/design-qa/desktop-top.png` and `/Users/mac/Documents/Zleap-web/docs/design-qa/desktop-bottom.png`
-- combined comparison: `/Users/mac/Documents/Zleap-web/docs/design-qa/desktop-comparison.png`
-- viewport: 1532 × 836 CSS pixels
-- state: desktop default view, fixed four-card layout
+- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-f9510650-5c8f-4429-a67b-965d1b6bb525.png`
+- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-184fcbef-f267-4198-9e08-5c7849a8be98.png`
+- `/var/folders/cx/wwlc2r057m18t68yq_t948bh0000gn/T/codex-clipboard-8ca14ffe-4d0d-44e7-9eff-b82f657ea8a4.png`
 
-## Full-View Comparison Evidence
+**Implementation evidence**
 
-The implementation preserves the overall reference composition: compact product header, centered Agent command area, dotted neutral canvas, two-column card grid, and floating primary navigation. The four cards use the content structure from the four-card reference and remain fixed in a 2 × 2 grid at desktop width.
+- Search landing: `/tmp/zleap-source-search-initial.png`
+- Submitted search and open scope menu: `/tmp/zleap-source-search-result.png`
+- Event detail: `/tmp/zleap-source-search-detail.png`
+- Side-by-side comparison: `/tmp/zleap-source-search-comparison.jpg`
+- Viewport: 1430 × 720 override; the in-app browser capture is displayed at its browser surface scale.
+- State: information source search tab; public scope; submitted query; detail modal.
 
-## Focused Region Comparison Evidence
+**Full-view comparison evidence**
 
-- Top row: Agent running and today insights match the reference hierarchy, row density, progress/status treatments, and footer actions.
-- Bottom row: Agent list and source status match the reference list structure, state colors, summary tiles, and management actions.
-- Navigation: desktop is selected and the same five primary destinations remain available.
+- The implementation preserves the reference hierarchy: centered title, large orange-outlined query surface, inline scope selector and circular submit action, date-grouped timeline, time rail, event cards, related-item affordance, and centered event-detail modal.
+- The application header, secondary navigation, and persistent product dock remain visible because this is an integrated module rather than a standalone screenshot recreation.
 
-## Required Fidelity Surfaces
+**Focused region comparison evidence**
 
-- Fonts and typography: system Chinese sans-serif stack, compact labels, semibold headings, and muted metadata follow the reference hierarchy.
-- Spacing and layout rhythm: consistent 20px grid gap, 16px card radius, compact row heights, and aligned two-column tracks.
-- Colors and visual tokens: neutral slate surfaces with orange primary accents and green, blue, violet, and red semantic states.
-- Image quality and asset fidelity: the reference contains no required raster imagery; interface icons use the installed Remix Icon library.
-- Copy and content: all four required card types and their core fields are present with realistic demo content.
+- Search control: border color, 16px radius, field proportions, muted placeholder, scope menu placement, and amber action match the reference closely.
+- Timeline cards: title/body/source/related-count hierarchy, warm white surface, subtle border/shadow, left time rail, and vertical rhythm match the existing information-source matter view.
+- Detail modal: overlay strength, width, header divider, tag row, summary surface, source reference row, centered article title, and scrollable content match the supplied detail state.
 
-## Findings
+**Findings**
 
-- No actionable P0, P1, or P2 visual differences remain.
-- P3: the implementation uses the project's existing system font instead of a separately loaded display font.
+- No actionable P0/P1/P2 visual or interaction mismatch remains.
+- Fonts and typography: the existing product font stack, weights, line heights, and truncation are consistent with the supplied screens and current information-source UI.
+- Spacing and layout rhythm: central content width, search-to-timeline spacing, card padding, rail alignment, radii, and modal spacing are consistent at the tested desktop viewport.
+- Colors and visual tokens: neutral surfaces, amber/orange accents, muted metadata, borders, overlay, and shadows align with the reference and existing product tokens.
+- Image quality and asset fidelity: the reference contains no raster imagery requiring generation; UI icons use the installed Remix Icon set or existing product icons.
+- Copy and content: the search prompt, scope options, event-card structure, reference labels, and detail content follow the supplied examples.
 
-## Comparison History
+**Primary interactions tested**
 
-- Initial implementation: full-page browser capture was visually offset by the browser capture surface.
-- Fix: captured matching top and bottom viewport states and stitched them for a normalized full-page comparison.
-- Post-fix evidence: `docs/design-qa/desktop-comparison.png` shows the fixed four-card layout and both desktop regions at the intended scale.
-
-## Primary Interactions Tested
-
-- Desktop quick prompts populate the Agent command input.
-- Primary navigation switches Desktop → Assistant → Tasks → Sources.
+- Open information source module and select the first secondary menu item.
+- Open and close the search-scope menu.
+- Submit a query with Enter and verify the matching matter list.
+- Open an event detail modal and verify the detail content.
 - Browser console errors checked: none.
 
-## Implementation Checklist
+**Comparison history**
 
-- [x] Fixed four-card desktop structure
-- [x] Responsive one-column fallback
-- [x] Working primary navigation
-- [x] Production build succeeds
-- [x] Browser render and console verified
+- Initial comparison: no P0/P1/P2 findings. No visual fix iteration was required after the first browser-rendered comparison.
+
+**Follow-up polish**
+
+- P3: the persistent product dock partially overlaps lower timeline content at short browser heights; this is existing global-shell behavior and is outside this module's requested scope.
+
+**Implementation checklist**
+
+- [x] Search entry is first in the information-source secondary menu.
+- [x] Search landing, scope selector, query submission, matter results, related-item expansion, and event detail are interactive.
+- [x] Production build passes.
+- [x] Browser-rendered states and console are verified.
 
 final result: passed

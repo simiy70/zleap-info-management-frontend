@@ -10143,6 +10143,188 @@ const _pubFeed = [
 ];
 const publicFeedArticles = { default: _pubFeed };
 
+/* ─── INFORMATION SOURCE SEARCH ─── */
+const sourceSearchEvents = [
+  {
+    id: "search-red-dream",
+    time: "00:06",
+    title: "终极典藏版《红楼梦》首发及核心优势",
+    summary: "《红楼梦》作为四大名著之首蕴含处世智慧，终极典藏版由周汝昌校订，汇11部古抄本、集3000条脂砚斋批语，配多维注释与美学内容，首发价299元限时3天限量300套。",
+    source: "青年文摘",
+    relatedCount: 11,
+    tags: [{ prop: "产品", val: "终极典藏版《红楼梦》" }, { prop: "指标", val: "3000条" }, { prop: "指标", val: "300套" }, { prop: "人物", val: "周汝昌" }],
+    content: "《红楼梦》作为四大名著之首，是蕴含人情世故与处世智慧的经典，近百万读者评分超9.8分；本次推出的终极典藏版由红学泰斗周汝昌历时五年校订，汇入11部学术界公认早期古抄本，集齐8大脂评本共3000条脂砚斋原始批语，配置12维度随文注释、53个趣味专题、8大美学主题内容及清宫廷画师孙温红楼画作。",
+    articleTitle: "《红楼梦》：真正的情商高，不是八面玲珑、能说会道，而是走到人前，被无限信任",
+  },
+  {
+    id: "search-ai-publishing",
+    time: "00:06",
+    title: "多领域资讯汇总：AI产业动态、出版推广及社会乱象",
+    summary: "AI全产业链呈现分化与乱象：上游代工领域台积电产能下调、英特尔亏损扩大，中游AI生成内容同质化、伦理争议频发，冲击多行业并引发创作者抵制；同期《青年文摘》推进订阅推广。",
+    source: "青年文摘",
+    relatedCount: 15,
+    tags: [{ prop: "行业", val: "AI产业" }, { prop: "行为", val: "出版推广" }, { prop: "主题", val: "社会乱象" }],
+    content: "人工智能产业链近期呈现明显分化。上游芯片和代工企业调整产能，中游生成式内容快速扩张的同时，同质化、版权和伦理争议也在增加。多家出版机构开始尝试以主题订阅和精选内容建立更稳定的读者连接。",
+    articleTitle: "AI产业分化加剧，内容行业如何寻找新的价值锚点",
+  },
+  {
+    id: "search-sukamuljo",
+    time: "00:05",
+    title: "苏卡穆约吉德翁何时登顶男双世界第一？",
+    summary: "印尼男双组合苏卡穆约/吉德翁凭借连续的巡回赛冠军和稳定积分，在赛季中段登顶世界第一，并以快速连贯和前场压迫打法成为当时最具代表性的男双组合。",
+    source: "羽毛球杂志",
+    relatedCount: 8,
+    tags: [{ prop: "人物", val: "苏卡穆约" }, { prop: "人物", val: "吉德翁" }, { prop: "指标", val: "世界第一" }],
+    content: "苏卡穆约与吉德翁在多个超级系列赛中连续夺冠，依靠稳定积分完成世界排名跃升。他们的速度、轮转以及前三拍控制，改变了男双比赛对节奏的理解。",
+    articleTitle: "小黄人组合登顶世界第一的关键节点",
+  },
+  {
+    id: "search-economy",
+    time: "00:05",
+    title: "消费市场观察：文化产品与年轻用户的新连接",
+    summary: "文化内容消费正从单次购买转向收藏、社群和知识服务相结合的长期关系，年轻用户更看重版本质量、内容策划与持续互动。",
+    source: "第一财经",
+    relatedCount: 6,
+    tags: [{ prop: "行业", val: "文化消费" }, { prop: "群体", val: "年轻用户" }],
+    content: "越来越多文化产品开始以策划型内容、收藏价值和社群服务形成差异化。用户不再只比较价格，也会判断内容的可信度、版本稀缺性与长期服务能力。",
+    articleTitle: "年轻人为何愿意为高质量文化内容买单",
+  },
+];
+
+function SourceSearchPage() {
+  const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [scope, setScope] = useState("public");
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const [detail, setDetail] = useState(null);
+  const [expanded, setExpanded] = useState(new Set());
+
+  const submitSearch = () => setSubmittedQuery(query.trim());
+  const visibleEvents = useMemo(() => {
+    const scopeEvents = scope === "personal" ? sourceSearchEvents.slice(0, 2) : sourceSearchEvents;
+    const keyword = submittedQuery.toLowerCase();
+    if (!keyword) return scopeEvents;
+    const matched = scopeEvents.filter(event => [event.title, event.summary, event.source, event.content, event.articleTitle]
+      .join(" ").toLowerCase().includes(keyword));
+    return matched.length ? matched : scopeEvents;
+  }, [scope, submittedQuery]);
+
+  const toggleRelated = (id) => setExpanded(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  return (
+    <div className="relative flex flex-1 flex-col overflow-y-auto bg-white" onClick={() => setScopeOpen(false)}>
+      <div className="mx-auto w-full max-w-[860px] px-8 pb-14 pt-9">
+        <h1 className="text-center text-[30px] font-bold tracking-tight text-neutral-900">信息源搜索</h1>
+
+        <div className="mt-8 rounded-2xl border border-orange-300 bg-white px-5 pb-4 pt-4 shadow-[0_12px_34px_rgba(249,115,22,0.05)] focus-within:border-orange-400">
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && submitSearch()}
+            placeholder="苏卡穆约吉德翁何时登顶男双世界第一？"
+            className="h-11 w-full bg-transparent text-[15px] text-neutral-700 placeholder:text-neutral-400 focus:outline-none"
+            aria-label="搜索信息源"
+          />
+          <div className="flex items-center justify-between">
+            <div className="relative" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setScopeOpen(v => !v)} className="flex items-center gap-1.5 text-sm text-neutral-500 transition hover:text-neutral-800">
+                <span>搜索范围：</span>
+                <span className="text-[#a98252]">{scope === "public" ? "公共信息" : "个人信息"}</span>
+                <i className={scopeOpen ? "ri-arrow-up-s-line text-[#a98252]" : "ri-arrow-down-s-line text-[#a98252]"} />
+              </button>
+              {scopeOpen && (
+                <div className="absolute left-10 top-7 z-20 w-[132px] overflow-hidden rounded-lg border border-neutral-100 bg-white py-1.5 shadow-lg">
+                  <button onClick={() => { setScope("public"); setScopeOpen(false); }} className={`flex w-full items-center px-4 py-2 text-left text-sm ${scope === "public" ? "text-[#9a6f3d]" : "text-neutral-600 hover:bg-neutral-50"}`}>公共信息源</button>
+                  <button onClick={() => { setScope("personal"); setScopeOpen(false); }} className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm ${scope === "personal" ? "text-[#9a6f3d]" : "text-neutral-500 hover:bg-neutral-50"}`}>
+                    个人信息 <i className="ri-edit-2-line text-neutral-400" />
+                  </button>
+                </div>
+              )}
+            </div>
+            <button onClick={submitSearch} className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500 text-white transition hover:bg-amber-600" aria-label="搜索">
+              <i className="ri-arrow-right-line text-lg" />
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-4 mt-8 flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[20px] font-semibold text-[#a47a49]">7/13</span>
+            <span className="text-[17px] font-semibold text-[#a47a49]">每日事件</span>
+          </div>
+          <button className="flex items-center gap-1.5 text-sm text-slate-400 transition hover:text-orange-500">
+            <i className="ri-history-line text-base" /> 往期事件
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {visibleEvents.map(event => (
+            <div key={event.id} className="grid grid-cols-[64px_1fr] gap-0">
+              <div className="relative pr-5 pt-3 text-left text-sm text-slate-400">
+                {event.time}
+                <span className="absolute bottom-0 right-0 top-0 w-px bg-slate-200" />
+              </div>
+              <div className="ml-5 overflow-hidden rounded-lg border border-neutral-100 bg-[#fffdfa] shadow-[0_2px_8px_rgba(15,23,42,0.05)]">
+                <button onClick={() => setDetail(event)} className="block w-full px-7 pb-2 pt-5 text-left transition hover:bg-orange-50/30">
+                  <h2 className="text-[16px] font-semibold leading-6 text-neutral-900">{event.title}</h2>
+                  <p className="mt-2 line-clamp-2 text-[14px] leading-6 text-slate-500">{event.summary}</p>
+                </button>
+                <div className="flex items-center justify-between px-7 pb-4 pt-1">
+                  <span className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[8px] font-bold text-white">青</span>
+                    {event.source}
+                  </span>
+                  <button onClick={() => toggleRelated(event.id)} className="flex items-center gap-1 text-xs text-amber-500 transition hover:text-amber-600">
+                    {event.relatedCount}个相关子事项 <i className={expanded.has(event.id) ? "ri-arrow-up-s-line" : "ri-arrow-down-s-line"} />
+                  </button>
+                </div>
+                {expanded.has(event.id) && (
+                  <div className="border-t border-orange-100 bg-orange-50/40 px-7 py-3 text-sm text-neutral-600">
+                    已展开相关子事项：人物、产品、时间与指标等属性均可继续查看。
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {detail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5" onClick={() => setDetail(null)}>
+          <div className="flex w-full max-w-[512px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl" style={{ maxHeight: "82vh" }} onClick={e => e.stopPropagation()}>
+            <div className="flex shrink-0 items-center justify-between px-6 pb-4 pt-7">
+              <h2 className="text-[20px] font-semibold text-neutral-900">事件详情</h2>
+              <button onClick={() => setDetail(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-800 transition hover:bg-neutral-100" aria-label="关闭">
+                <i className="ri-close-line text-2xl" />
+              </button>
+            </div>
+            <div className="mx-6 border-t border-neutral-200" />
+            <div className="flex-1 overflow-y-auto px-10 pb-8 pt-4">
+              <h3 className="text-[17px] font-semibold leading-6 text-neutral-900">{detail.title}</h3>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {detail.tags.map((tag, index) => (
+                  <span key={`${tag.prop}-${index}`} className="bg-neutral-50 px-2 py-1 text-[11px] text-neutral-400">{tag.prop}-{tag.val}</span>
+                ))}
+              </div>
+              <p className="mt-2 bg-neutral-50 px-5 py-3 text-[13px] leading-5 text-neutral-600">{detail.summary}</p>
+              <div className="mt-4 flex items-center justify-between text-xs">
+                <span className="text-neutral-500">原文参考</span>
+                <button className="text-blue-500 transition hover:underline">查看链接</button>
+              </div>
+              <div className="mt-8 text-center text-[19px] font-semibold leading-7 text-slate-700">{detail.articleTitle}</div>
+              <div className="mt-5 whitespace-pre-line text-[14px] leading-8 text-slate-600">{detail.content}</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PublicSourceDetail({ item, onBack }) {
   const [query, setQuery]               = useState("");
   const [activeQuery, setActiveQuery]   = useState("");
@@ -10553,7 +10735,7 @@ function PublicSourcesPage({ onSelectItem, search: searchProp, setSearch: setSea
 const TABS = ["全部", "我创建的", "与我共享"];
 
 function InfoSourcePage({ onNavigate }) {
-  const [navPage, setNavPage]       = useState("mine"); // "mine" | "shared" | "report"
+  const [navPage, setNavPage]       = useState("mine"); // "search" | "mine" | "shared" | "report" | "public"
   const [page, setPage]             = useState("home");
   const [detailItem, setDetailItem]   = useState(null);
   const [publicDetail, setPublicDetail] = useState(null);
@@ -10852,6 +11034,7 @@ function InfoSourcePage({ onNavigate }) {
   );
 
   const navItems = [
+    { Icon: Icon.Search,    label: "信息源搜索", id: "search" },
     { Icon: Icon.Grid,      label: "我的信息源", id: "mine" },
     { Icon: Icon.Share,     label: "与我共享",   id: "shared" },
     { Icon: Icon.Timeline,  label: "汇报信息源", id: "report" },
@@ -10895,7 +11078,7 @@ function InfoSourcePage({ onNavigate }) {
             </nav>
 
             {/* 搜索 + 视图切换（所有 tab 通用；对应各 page 的独立状态） */}
-            {(() => {
+            {navPage !== "search" && (() => {
               const isMineShared = navPage === "mine" || navPage === "shared";
               const cfg = isMineShared
                 ? { value: search, onChange: setSearch, placeholder: "搜索信息…", view, setView }
@@ -10941,7 +11124,11 @@ function InfoSourcePage({ onNavigate }) {
             })()}
           </div>
 
-          {navPage === "report" ? (
+          {navPage === "search" ? (
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+              <SourceSearchPage />
+            </div>
+          ) : navPage === "report" ? (
             /* 汇报信息源 view */
             <div className="flex flex-1 min-h-0 overflow-hidden">
               <ReportPage
