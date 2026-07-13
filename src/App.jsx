@@ -11091,7 +11091,6 @@ function InfoSourcePage({ onNavigate }) {
             {
               id: "assistant", label: "助手",
               iconBg: "bg-emerald-100", iconColor: "text-emerald-600",
-              badge: { type: "count", value: 3 },
               icon: (
                 <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
               ),
@@ -11099,7 +11098,6 @@ function InfoSourcePage({ onNavigate }) {
             {
               id: "tasks", label: "任务",
               iconBg: "bg-blue-100", iconColor: "text-blue-600",
-              badge: { type: "dot" },
               icon: (
                 <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><polyline points="8.5 12.5 11 15 15.8 10"/></svg>
               ),
@@ -11408,12 +11406,16 @@ function InfoSourcePage({ onNavigate }) {
 
 function App() {
   const [primaryPage, setPrimaryPage] = useState("desktop");
-  const navigate = (page) => {
-    if (["desktop", "sources", "assistant", "tasks"].includes(page)) setPrimaryPage(page);
+  const [assistantPrompt, setAssistantPrompt] = useState("");
+  const navigate = (page, payload) => {
+    if (["desktop", "sources", "assistant", "tasks"].includes(page)) {
+      if (page === "assistant") setAssistantPrompt(payload?.prompt || "");
+      setPrimaryPage(page);
+    }
   };
 
   if (primaryPage === "desktop") return <DesktopPage onNavigate={navigate} />;
-  if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} />;
+  if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} initialPrompt={assistantPrompt} />;
   if (primaryPage === "tasks") return <TaskPage onNavigate={navigate} />;
   return <InfoSourcePage onNavigate={navigate} />;
 }

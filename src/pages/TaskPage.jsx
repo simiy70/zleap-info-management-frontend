@@ -32,7 +32,7 @@ const dockItems = [
 function Dock({ onNavigate }) {
   return <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center"><nav className="pointer-events-auto flex items-end gap-1 rounded-3xl border border-white/70 bg-white/60 px-3 py-2.5 shadow-xl shadow-neutral-900/10 backdrop-blur-xl">
     {dockItems.map(([id, label, icon, bg, color]) => <button key={id} onClick={() => onNavigate?.(id)} className={`group flex w-16 flex-col items-center gap-1 rounded-2xl px-1.5 py-1.5 transition ${id === "tasks" ? "bg-white/70" : "hover:bg-white/50"}`}>
-      <span className={`relative flex h-11 w-11 items-center justify-center rounded-[14px] ${bg} ${color} text-[23px] transition-transform group-hover:scale-[1.04] group-active:scale-95`}><i className={icon} />{id === "sources" && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white ring-2 ring-white">3</span>}</span>
+      <span className={`relative flex h-11 w-11 items-center justify-center rounded-[14px] ${bg} ${color} text-[23px] transition-transform group-hover:scale-[1.04] group-active:scale-95`}><i className={icon} /></span>
       <span className={`text-[11px] leading-none ${id === "tasks" ? "font-medium text-neutral-800" : "text-neutral-500"}`}>{label}</span>
     </button>)}
   </nav></div>;

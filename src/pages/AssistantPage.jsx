@@ -179,10 +179,10 @@ function ManagementView({ items, view }) {
 }
 
 /* ─── 对话视图 ─── */
-function ChatView() {
+function ChatView({ initialDraft = "" }) {
   const [activeChatId, setActiveChatId] = useState(101);
   const [chatSearch, setChatSearch] = useState("");
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(initialDraft);
   const [visibleSessionCount, setVisibleSessionCount] = useState(6);
   const messagesRef = useRef(null);
   const sessionsListRef = useRef(null);
@@ -428,8 +428,8 @@ function CreateAssistantModal({ onClose, onCreate }) {
   );
 }
 
-export default function AssistantPage({ onNavigate }) {
-  const [viewMode, setViewMode] = useState("management"); // "chat" | "management"
+export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
+  const [viewMode, setViewMode] = useState(initialPrompt ? "chat" : "management"); // "chat" | "management"
   const [subTab, setSubTab]     = useState("created");     // "mine" | "created" | "recommend"
   const [search, setSearch]     = useState("");
   const [filterActive, setFilterActive] = useState(false);
@@ -546,7 +546,7 @@ export default function AssistantPage({ onNavigate }) {
           <div className="flex-1 overflow-y-auto pb-32">
             {viewMode === "management"
               ? <ManagementView items={filteredAssistants} view="card" />
-              : <ChatView />}
+              : <ChatView initialDraft={initialPrompt} />}
           </div>
         </main>
       </div>
@@ -559,14 +559,12 @@ export default function AssistantPage({ onNavigate }) {
               icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg> },
             { id: "sources", label: "信息源",
               iconBg: "bg-violet-100", iconColor: "text-violet-600",
-              badge: { type: "count", value: 3 },
               icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="2.6"/><path d="M4 5v6c0 1.44 3.58 2.6 8 2.6s8-1.16 8-2.6V5"/><path d="M4 11v6c0 1.44 3.58 2.6 8 2.6s8-1.16 8-2.6v-6"/></svg> },
             { id: "assistant", label: "助手", active: true,
               iconBg: "bg-emerald-100", iconColor: "text-emerald-600",
               icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg> },
             { id: "tasks", label: "任务",
               iconBg: "bg-blue-100", iconColor: "text-blue-600",
-              badge: { type: "dot" },
               icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><polyline points="8.5 12.5 11 15 15.8 10"/></svg> },
             { id: "feed", label: "动态",
               iconBg: "bg-rose-100", iconColor: "text-rose-500",
