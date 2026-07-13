@@ -2367,7 +2367,7 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
   const sortedItems = [...items].sort((a, b) => toSortKey(b[timeMode]) - toSortKey(a[timeMode]));
   return (
     <div>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
       {onCreateNew && (
         <div onClick={onCreateNew}
           className="group relative flex min-h-[168px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 bg-white/60 text-neutral-300 transition-all hover:border-orange-300 hover:bg-orange-50/20 hover:text-orange-400">
