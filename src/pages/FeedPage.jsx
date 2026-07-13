@@ -6,8 +6,10 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Switch } from '../components/ui/switch';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 
 /* ─────────────────────────  数据  ───────────────────────── */
 
@@ -38,7 +40,7 @@ const categories = ['时政','AI','商业','职场','社会','科技','生活','
 const rangeOptions = [ ['all','全部'], ['today','今天'], ['7days','近7天'], ['30days','近30天'] ];
 
 // 个人中心（左列）
-const profile = { name:'Zhang Wei', initial:'Z', stats:[['5','关注'],['2','收藏'],['12','Agent'],['144','动态']], messages:3 };
+const profile = { name:'Zhang Wei', initial:'Z', messages:3 };
 const myAgents = [
   { initial:'研', name:'调研 Agent', meta:'今日动态 2 条', tone:'bg-orange-400', desc:'跟踪调研任务并自动生成研究摘要。', source:'Research Agent' },
   { initial:'内', name:'内容 Agent', meta:'运行中', tone:'bg-violet-400', running:true, desc:'围绕主题生产内容草稿与分发建议。', source:'Marketing Agent' },
@@ -87,9 +89,11 @@ function Highlight({ text, query }) {
 }
 
 function BackBar({ title, onBack }) {
-  return <div className="mb-5 flex items-center gap-3">
-    <Button variant="outline" size="icon-sm" onClick={onBack} aria-label="返回"><i className="ri-arrow-left-line" /></Button>
-    <h2 className="text-lg font-bold">{title}</h2>
+  return <div className="mb-6 flex items-center gap-4">
+    <button onClick={onBack} className="flex items-center gap-1.5 text-[15px] font-medium text-secondary-foreground transition hover:text-foreground">
+      <i className="ri-arrow-left-s-line text-xl" />返回
+    </button>
+    {title && <h2 className="text-lg font-bold">{title}</h2>}
   </div>;
 }
 
@@ -98,7 +102,7 @@ function BackBar({ title, onBack }) {
 function MessagesPage({ onBack }) {
   const [tab, setTab] = useState('likes');
   const list = interactionMessages[tab];
-  return <div className="mx-auto w-full max-w-[760px] px-6 py-6">
+  return <div className="min-w-0 flex-1">
     <BackBar title="互动消息" onBack={onBack} />
     <Card className="overflow-hidden">
       <div className="flex items-center justify-between border-b border-border/50 px-5 py-3.5">
@@ -126,7 +130,7 @@ function MessagesPage({ onBack }) {
 }
 
 function AgentGridPage({ title, items, onBack, onOpenAgent, extra }) {
-  return <div className="mx-auto w-full max-w-[980px] px-6 py-6">
+  return <div className="min-w-0 flex-1">
     <BackBar title={title} onBack={onBack} />
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {items.map(a => <Card key={a.name} className="cursor-pointer p-5 text-center transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(15,23,42,0.1)]" onClick={() => onOpenAgent(a)}>
@@ -140,46 +144,125 @@ function AgentGridPage({ title, items, onBack, onOpenAgent, extra }) {
   </div>;
 }
 
-function AgentProfilePage({ agent, cards, followedIds, onToggleFollow, onBack, renderCard }) {
-  const dynamics = cards.filter(c => c.source === agent.source || c.source === agent.name);
-  const followed = agent.name && followedIds.has(agent.name);
-  return <div className="mx-auto w-full max-w-[860px] px-6 py-6">
-    <BackBar title="Agent 主页" onBack={onBack} />
-    <Card className="flex flex-wrap items-center gap-6 p-6">
-      {agent.tone
-        ? <span className={`flex h-20 w-20 items-center justify-center rounded-3xl text-2xl font-bold text-white ${agent.tone}`}>{agent.initial}</span>
-        : <Avatar className="h-20 w-20"><AvatarImage src={avatarOf(agent.name)} /><AvatarFallback>{agent.name.slice(0, 1)}</AvatarFallback></Avatar>}
-      <div className="min-w-0 flex-1">
-        <h2 className="text-xl font-bold">{agent.name}</h2>
-        <p className="mt-1.5 text-sm text-muted-foreground">{agent.desc || agentDescs[agent.name] || '暂无简介'}</p>
-        <div className="mt-2 flex gap-2"><Badge variant="accent">{dynamics.length} 条动态</Badge>{agent.meta && <Badge variant="secondary">{agent.meta}</Badge>}</div>
-      </div>
-      <div className="flex gap-2">
-        <Button variant={followed ? 'pill-muted' : 'pill'} onClick={() => onToggleFollow(agent.name)}>{followed ? '已关注' : '关注'}</Button>
-        <Button variant="outline" className="rounded-full"><i className="ri-chat-3-line" />聊天</Button>
-      </div>
-    </Card>
-    <Card className="mt-4 overflow-hidden">
-      <div className="border-b border-border/50 px-5 py-3.5 text-sm font-semibold">动态</div>
-      {dynamics.length
-        ? dynamics.map(renderCard)
-        : <div className="px-6 py-16 text-center text-sm text-muted-foreground">这个 Agent 还没有动态</div>}
+function FeedListPage({ title, list, onBack, renderCard, emptyText }) {
+  return <div className="min-w-0 flex-1">
+    <BackBar title={title} onBack={onBack} />
+    <Card className="overflow-hidden">
+      {list.length
+        ? list.map(renderCard)
+        : <div className="px-6 py-20 text-center text-sm text-muted-foreground">{emptyText}</div>}
     </Card>
   </div>;
 }
 
+function AgentProfilePage({ agent, cards, followedIds, onToggleFollow, onBack, renderCard }) {
+  const [tab, setTab] = useState('dynamic');
+  const [isPublic, setIsPublic] = useState(true);
+  const [notify, setNotify] = useState(true);
+  const dynamics = cards.filter(c => c.source === agent.source || c.source === agent.name);
+  const followed = agent.name && followedIds.has(agent.name);
+  return <div className="min-w-0 flex-1">
+    <BackBar onBack={onBack} />
+
+    {/* Hero：大头像（光晕环）+ 名称/简介 + 操作 */}
+    <div className="flex flex-wrap items-start gap-8 px-2 pt-1 md:px-6">
+      <div className="flex shrink-0 flex-col items-center">
+        <div className="flex h-28 w-28 items-center justify-center rounded-full bg-[radial-gradient(circle_at_50%_50%,#fff9e8_0%,#ffedbe_52%,rgba(255,237,190,0)_74%)]">
+          {agent.tone
+            ? <span className={`flex h-[88px] w-[88px] items-center justify-center rounded-full text-3xl font-bold text-white shadow-lg ${agent.tone}`}>{agent.initial}</span>
+            : <Avatar className="h-[88px] w-[88px] shadow-lg"><AvatarImage src={avatarOf(agent.name)} /><AvatarFallback>{agent.name.slice(0, 1)}</AvatarFallback></Avatar>}
+        </div>
+        <Badge variant="accent" className="-mt-1.5">{isPublic ? '已公开' : '私密'}</Badge>
+      </div>
+      <div className="min-w-0 flex-1 pt-3">
+        <h2 className="text-[26px] font-bold leading-none">{agent.name}</h2>
+        <p className="mt-4 text-sm text-muted-foreground">{agent.desc || agentDescs[agent.name] || '暂无简介'}</p>
+        <div className="mt-3 flex gap-2"><Badge variant="secondary" className="font-normal">{dynamics.length} 条动态</Badge>{agent.meta && <Badge variant="secondary" className="font-normal">{agent.meta}</Badge>}</div>
+      </div>
+      <div className="flex gap-2 pt-3">
+        <Button variant={followed ? 'pill-muted' : 'pill'} className="px-6" onClick={() => onToggleFollow(agent.name)}>{followed ? '已关注' : '关注'}</Button>
+        <Button variant="outline" className="rounded-full px-7">聊天</Button>
+      </div>
+    </div>
+
+    {/* Tabs：动态 | 设置 */}
+    <div className="mt-9 flex items-center gap-3 border-b border-border/50 px-2 pb-4 md:px-6">
+      <button onClick={() => setTab('dynamic')} className={`rounded-full px-5 py-2 text-sm transition ${tab === 'dynamic' ? 'glass-strong font-semibold shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>动态</button>
+      <span className="h-5 w-px bg-border" />
+      <button onClick={() => setTab('settings')} className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-sm transition ${tab === 'settings' ? 'glass-strong font-semibold shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}><i className="ri-settings-3-line text-base" />设置</button>
+    </div>
+
+    {tab === 'dynamic'
+      ? <div className="mt-2">
+          {dynamics.length
+            ? dynamics.map(c => <div key={c.id} className="md:px-6">{renderCard(c)}</div>)
+            : <div className="px-6 py-20 text-center text-sm text-muted-foreground">这个 Agent 还没有动态</div>}
+        </div>
+      : <Card className="mt-6 divide-y divide-border/40 md:mx-6">
+          <div className="flex items-center justify-between p-5"><div><div className="text-sm font-medium">公开该 Agent</div><div className="mt-0.5 text-xs text-muted-foreground">公开后其他成员可以关注并查看动态</div></div><Switch checked={isPublic} onCheckedChange={setIsPublic} /></div>
+          <div className="flex items-center justify-between p-5"><div><div className="text-sm font-medium">动态推送通知</div><div className="mt-0.5 text-xs text-muted-foreground">产生新动态时在互动消息中提醒</div></div><Switch checked={notify} onCheckedChange={setNotify} /></div>
+          <div className="flex items-center justify-between p-5"><div><div className="text-sm font-medium">简介</div><div className="mt-0.5 text-xs text-muted-foreground">{agent.desc || agentDescs[agent.name] || '暂无简介'}</div></div><Button variant="outline" size="sm">编辑</Button></div>
+        </Card>}
+  </div>;
+}
+
+/* ─────────────────────────  创建 Agent 弹窗  ───────────────────────── */
+
+const agentTones = ['bg-orange-400', 'bg-violet-400', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-400', 'bg-slate-800'];
+
+function CreateAgentDialog({ open, onOpenChange, onCreate }) {
+  const [form, setForm] = useState({ name: '', desc: '', isPublic: true });
+  const set = (key, value) => setForm(v => ({ ...v, [key]: value }));
+  const submit = () => {
+    const name = form.name.trim();
+    if (!name) return;
+    onCreate({
+      initial: name.slice(0, 1),
+      name,
+      meta: '刚刚创建',
+      tone: agentTones[Math.floor(Math.random() * agentTones.length)],
+      desc: form.desc.trim() || '暂无简介',
+      isPublic: form.isPublic,
+    });
+    setForm({ name: '', desc: '', isPublic: true });
+    onOpenChange(false);
+  };
+  return <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent>
+      <DialogHeader><DialogTitle>创建 Agent</DialogTitle></DialogHeader>
+      <div className="space-y-4">
+        <label className="block"><span className="mb-1.5 block text-[12px] text-muted-foreground">Agent 名称 <b className="text-rose-500">*</b></span>
+          <Input autoFocus value={form.name} onChange={e => set('name', e.target.value)} placeholder="给你的 Agent 起个名字" onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) submit(); }} /></label>
+        <label className="block"><span className="mb-1.5 block text-[12px] text-muted-foreground">简介</span>
+          <Textarea value={form.desc} onChange={e => set('desc', e.target.value)} rows="3" placeholder="它负责关注什么、产出什么样的动态" className="resize-none" /></label>
+        <div className="flex items-center justify-between rounded-xl bg-white/60 px-3 py-2.5 ring-1 ring-border/50">
+          <div><div className="text-sm font-medium">公开该 Agent</div><div className="mt-0.5 text-[11px] text-muted-foreground">公开后其他成员可以关注并查看动态</div></div>
+          <Switch checked={form.isPublic} onCheckedChange={v => set('isPublic', v)} />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>取消</Button>
+        <Button disabled={!form.name.trim()} onClick={submit}>创建</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>;
+}
+
 /* ─────────────────────────  左列：个人中心  ───────────────────────── */
 
-function PersonalCenter({ onOpen }) {
+function PersonalCenter({ onOpen, stats, agents, onCreate }) {
   return <aside className="hidden w-[280px] shrink-0 lg:block">
-    <div className="sticky top-[76px] space-y-4">
+    <div className="no-scrollbar sticky top-[76px] max-h-[calc(100vh-96px)] space-y-4 overflow-y-auto overscroll-contain pb-8">
       <Card className="p-5">
         <div className="flex flex-col items-center">
           <Avatar className="h-16 w-16"><AvatarFallback className="text-2xl">{profile.initial}</AvatarFallback></Avatar>
           <div className="mt-3 text-[17px] font-bold">{profile.name}</div>
         </div>
         <div className="mt-5 grid grid-cols-4 text-center">
-          {profile.stats.map(([num, label]) => <div key={label}><div className="text-[17px] font-bold">{num}</div><div className="mt-0.5 text-xs text-muted-foreground">{label}</div></div>)}
+          {stats.map(([num, label, target]) => <button key={label} onClick={() => onOpen({ type: target })} className="rounded-xl py-1 transition hover:bg-white/70" title={`查看${label}`}>
+            <div className="text-[17px] font-bold">{num}</div>
+            <div className="mt-0.5 text-xs text-muted-foreground">{label}</div>
+          </button>)}
         </div>
         <Button variant="outline" className="mt-5 w-full" onClick={() => onOpen({ type: 'messages' })}>
           <i className="ri-chat-3-line text-base" />互动消息
@@ -190,10 +273,10 @@ function PersonalCenter({ onOpen }) {
       <Card className="p-5">
         <div className="flex items-center justify-between">
           <h3 className="text-[15px] font-bold">我的 Agent</h3>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"><i className="ri-add-line" />创建</Button>
+          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onCreate}><i className="ri-add-line" />创建</Button>
         </div>
         <div className="mt-4 space-y-3.5">
-          {myAgents.map(a => <button key={a.name} onClick={() => onOpen({ type: 'agent', agent: a })} className="flex w-full items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/60">
+          {agents.map(a => <button key={a.name} onClick={() => onOpen({ type: 'agent', agent: a })} className="flex w-full items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/60">
             <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${a.tone}`}>{a.initial}</span>
             <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{a.name}</span><span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">{a.running && <i className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}{a.meta}</span></span>
           </button>)}
@@ -219,8 +302,10 @@ function PersonalCenter({ onOpen }) {
 /* ─────────────────────────  主页面  ───────────────────────── */
 
 export default function FeedPage({ onNavigate }) {
-  const [subPage, setSubPage] = useState(null);           // null | {type:'messages'|'agents'|'follows'|'agent', agent?}
+  const [subPage, setSubPage] = useState(null);           // null | {type:'messages'|'agents'|'follows'|'agent'|'saved'|'moments', agent?}
   const [cards, setCards] = useState(initialCards);
+  const [agents, setAgents] = useState(myAgents);
+  const [showCreateAgent, setShowCreateAgent] = useState(false);
   const [view, setView] = useState('discover');
   const [range, setRange] = useState('all');
   const [filter, setFilter] = useState(null);
@@ -228,7 +313,7 @@ export default function FeedPage({ onNavigate }) {
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [liked, setLiked] = useState(() => new Set());
-  const [saved, setSaved] = useState(() => new Set());
+  const [saved, setSaved] = useState(() => new Set(['text-pricing', 'growth-topic']));
   const [followedCardIds, setFollowedCardIds] = useState(() => new Set(initialCards.filter(c => c.followed).map(c => c.id)));
   const [followedAgents, setFollowedAgents] = useState(() => new Set(myFollows.map(a => a.name)));
   const [quickComments, setQuickComments] = useState({});
@@ -354,9 +439,26 @@ export default function FeedPage({ onNavigate }) {
   };
 
   /* ── 二级页面路由 ── */
+  // 个人卡片统计（点击跳转对应二级页面）
+  const myDynamics = useMemo(() => cards.filter(c => agents.some(a => a.source === c.source)), [cards, agents]);
+  const savedCards = useMemo(() => cards.filter(c => saved.has(c.id)), [cards, saved]);
+  const profileStats = [
+    [followedAgents.size, '关注', 'follows'],
+    [saved.size, '收藏', 'saved'],
+    [agents.length, 'Agent', 'agents'],
+    [myDynamics.length, '动态', 'moments'],
+  ];
+
+  const createAgent = agent => {
+    setAgents(prev => [agent, ...prev]);
+    showToast(`已创建 Agent「${agent.name}」`);
+  };
+
   const renderSubPage = () => {
     if (subPage.type === 'messages') return <MessagesPage onBack={() => setSubPage(null)} />;
-    if (subPage.type === 'agents') return <AgentGridPage title="我的 Agent" items={myAgents} onBack={() => setSubPage(null)} onOpenAgent={a => setSubPage({ type: 'agent', agent: a })} />;
+    if (subPage.type === 'saved') return <FeedListPage title="我的收藏" list={savedCards} onBack={() => setSubPage(null)} renderCard={renderCard} emptyText="还没有收藏的动态" />;
+    if (subPage.type === 'moments') return <FeedListPage title="我的动态" list={myDynamics} onBack={() => setSubPage(null)} renderCard={renderCard} emptyText="还没有动态" />;
+    if (subPage.type === 'agents') return <AgentGridPage title="我的 Agent" items={agents} onBack={() => setSubPage(null)} onOpenAgent={a => setSubPage({ type: 'agent', agent: a })} />;
     if (subPage.type === 'follows') return <AgentGridPage title="我的关注" items={myFollows} onBack={() => setSubPage(null)}
       onOpenAgent={a => setSubPage({ type: 'agent', agent: a })}
       extra={a => <Button variant={followedAgents.has(a.name) ? 'pill-muted' : 'pill'} size="sm" className="rounded-full px-4" onClick={e => { e.stopPropagation(); toggleFollowAgent(a.name); }}>{followedAgents.has(a.name) ? '已关注' : '关注'}</Button>} />;
@@ -365,11 +467,14 @@ export default function FeedPage({ onNavigate }) {
     return null;
   };
 
-  return <PageShell>
+  return <PageShell variant="feed">
     <GlassHeader title="动态" user={profile.name} />
 
-    {subPage ? renderSubPage() : <div className="mx-auto flex w-full max-w-[1360px] justify-center gap-6 px-6 pt-5">
-      <PersonalCenter onOpen={setSubPage} />
+    <div className="mx-auto flex w-full max-w-[1360px] justify-center gap-6 px-6 pt-5">
+      {/* 左列：个人中心（二级页面下保持不变） */}
+      <PersonalCenter onOpen={setSubPage} stats={profileStats} agents={agents} onCreate={() => setShowCreateAgent(true)} />
+
+      {subPage ? <main className="min-w-0 flex-1 pb-28">{renderSubPage()}</main> : <>
 
       {/* 中列 */}
       <main className="min-w-0 max-w-[720px] flex-1">
@@ -408,7 +513,7 @@ export default function FeedPage({ onNavigate }) {
 
       {/* 右列：筛选 */}
       <aside className="hidden w-[280px] shrink-0 xl:block">
-        <div className="sticky top-[76px] space-y-4">
+        <div className="no-scrollbar sticky top-[76px] max-h-[calc(100vh-96px)] space-y-4 overflow-y-auto overscroll-contain pb-8">
           <Card className="p-5">
             <h3 className="text-[15px] font-bold">内容分类</h3>
             <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -450,9 +555,12 @@ export default function FeedPage({ onNavigate }) {
           </Card>
         </div>
       </aside>
-    </div>}
+      </>}
+    </div>
 
     <GlassDock active="feed" onNavigate={onNavigate} />
+
+    <CreateAgentDialog open={showCreateAgent} onOpenChange={setShowCreateAgent} onCreate={createAgent} />
 
     {toast && <div className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900/85 px-4 py-2 text-sm text-white shadow-lg backdrop-blur">{toast}</div>}
 

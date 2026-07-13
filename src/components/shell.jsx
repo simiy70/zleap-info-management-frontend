@@ -2,9 +2,15 @@ import React from 'react';
 import { cn } from '../lib/utils';
 import { Avatar, AvatarFallback } from './ui/avatar';
 
-/* ── 页面外壳：高科技渐变底 + 光斑 ── */
-export function PageShell({ className, children }) {
-  return <div className={cn('app-bg min-h-screen text-foreground', className)}>{children}</div>;
+/* ── 页面外壳：高科技渐变底 + 光斑；variant 切换网点光晕背景 ── */
+const shellVariants = {
+  default: 'app-bg',
+  desktop: 'app-bg-desktop', // 底部橙色光弧 + 半调网点
+  feed: 'app-bg-feed',       // 右上蓝光 + 左侧暖黄 + 半调网点
+};
+
+export function PageShell({ className, variant = 'default', children }) {
+  return <div className={cn(shellVariants[variant] || shellVariants.default, 'min-h-screen text-foreground', className)}>{children}</div>;
 }
 
 /* ── 顶栏（磨玻璃、吸顶） ── */
