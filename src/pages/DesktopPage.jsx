@@ -69,7 +69,7 @@ function CardShell({ icon, title, action, onAction, children }) {
 /* ─────────────────────────  四张卡片  ───────────────────────── */
 
 function TaskCard({ onNavigate }) {
-  return <CardShell icon="ri-checkbox-line" title="任务中心" action="全部任务" onAction={() => onNavigate('tasks')}>
+  return <CardShell icon="ri-checkbox-line" title="Agent工作台" action="全部任务" onAction={() => onNavigate('tasks')}>
     <div className="grid grid-cols-3 gap-3 px-5 pb-1">
       {taskStats.map(s => <div key={s.label} className="rounded-xl border border-border/40 bg-white/60 p-3.5">
         <div className={`flex h-9 w-9 items-center justify-center rounded-full text-lg ${s.tone}`}><i className={s.icon} /></div>
@@ -118,7 +118,7 @@ function InsightCard({ onNavigate }) {
 }
 
 function AgentListCard({ onNavigate }) {
-  return <CardShell icon="ri-robot-2-line" title="Agent 列表" action="管理 Agent" onAction={() => onNavigate('assistant')}>
+  return <CardShell icon="ri-robot-2-line" title="我的 Agent" action="管理 Agent" onAction={() => onNavigate('assistant')}>
     <div className="mx-5 mb-2 grid grid-cols-[1fr_88px_88px_20px] gap-2 rounded-lg bg-white/60 px-3 py-2 text-xs text-muted-foreground">
       <span>Agent 名称</span><span>发布动态</span><span>粉丝数量</span><span />
     </div>
