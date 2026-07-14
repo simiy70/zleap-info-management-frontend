@@ -17,10 +17,53 @@ const recentTasks = [
   { name: '竞品周报生成', status: '等待执行', variant: 'info', agent: '内容生成助手', time: '6月28日 18:03', icon: 'ri-file-text-line', tone: 'bg-blue-500' },
 ];
 
+// 今日洞察事件：与「信息源搜索」的每日事件卡片结构保持一致，点击展开事件详情弹窗
 const insightEvents = [
-  { time: '00:06', title: '终极奥藏版《红楼梦》首发及核心优势', desc: '《红楼梦》作为四大名著之首蕴含处世智慧，终极奥藏版由回达昌校订，汇11部古抄本，约3000条题墨批语，配多维注释与美学内容，首发价299元限…', source: '南丰文摘', related: 11 },
-  { time: '00:06', title: '多领域资讯汇总：AI 产业动态、出版推广及社会乱象', desc: 'AI全产业链呈现分化与乱象：上海代工领域卷和存量量下滑，英特尔亏损扩大。中澳AI生成内容同质化，伦理争议频发，冲击各行业并引发创作者质疑；周期…', source: '南丰文摘', related: 15 },
-  { time: '00:07', title: '新能源汽车 6 月销量榜：小米 YU7 上市即热销位列第一', desc: '6 月新能源汽车销量榜显示，比亚迪以 38.25 万辆夺冠；小米 YU7 上市即热销交付，销量超预期强三；吉利、长安位列三四位，行业竞争加剧。', source: '36氪', related: 8 },
+  {
+    id: 'insight-red-dream', time: '00:06',
+    title: '终极典藏版《红楼梦》首发及核心优势',
+    summary: '《红楼梦》作为四大名著之首蕴含处世智慧，终极典藏版由周汝昌校订，汇11部古抄本、集3000条脂砚斋批语，配多维注释与美学内容，首发价299元限时3天限量300套。',
+    source: '青年文摘', sourceTone: 'bg-red-600', relatedCount: 11,
+    tags: [{ prop: '产品', val: '终极典藏版《红楼梦》' }, { prop: '指标', val: '3000条' }, { prop: '指标', val: '300套' }, { prop: '人物', val: '周汝昌' }],
+    content: '《红楼梦》作为四大名著之首，是蕴含人情世故与处世智慧的经典，近百万读者评分超9.8分；本次推出的终极典藏版由红学泰斗周汝昌历时五年校订，汇入11部学术界公认早期古抄本，集齐8大脂评本共3000条脂砚斋原始批语，配置12维度随文注释、53个趣味专题、8大美学主题内容及清宫廷画师孙温红楼画作。',
+    articleTitle: '《红楼梦》：真正的情商高，不是八面玲珑、能说会道，而是走到人前，被无限信任',
+  },
+  {
+    id: 'insight-ai-publishing', time: '00:06',
+    title: '多领域资讯汇总：AI产业动态、出版推广及社会乱象',
+    summary: 'AI全产业链呈现分化与乱象：上游代工领域台积电产能下调、英特尔亏损扩大，中游AI生成内容同质化、伦理争议频发，冲击多行业并引发创作者抵制；同期《青年文摘》推进订阅推广。',
+    source: '青年文摘', sourceTone: 'bg-red-600', relatedCount: 15,
+    tags: [{ prop: '行业', val: 'AI产业' }, { prop: '行为', val: '出版推广' }, { prop: '主题', val: '社会乱象' }],
+    content: '人工智能产业链近期呈现明显分化。上游芯片和代工企业调整产能，中游生成式内容快速扩张的同时，同质化、版权和伦理争议也在增加。多家出版机构开始尝试以主题订阅和精选内容建立更稳定的读者连接。',
+    articleTitle: 'AI产业分化加剧，内容行业如何寻找新的价值锚点',
+  },
+  {
+    id: 'insight-yu7', time: '00:07',
+    title: '新能源汽车6月销量榜：小米YU7上市即热销',
+    summary: '6月新能源汽车销量榜显示，比亚迪以38.25万辆夺冠；小米YU7上市即热销交付，销量超预期跻身前三；吉利、长安位列三四位，行业竞争加剧。',
+    source: '36氪', sourceTone: 'bg-sky-600', relatedCount: 8,
+    tags: [{ prop: '组织', val: '小米' }, { prop: '产品', val: 'YU7' }, { prop: '指标', val: '38.25万辆' }],
+    content: '6月新能源汽车市场延续高增长，比亚迪继续领跑；小米YU7上市首月即进入销量榜前三，锁单量与交付节奏均超出行业预期。多家券商上调对新势力品牌的季度销量预测，价格与产品配置竞争进一步加剧。',
+    articleTitle: '小米YU7首月战报：上市即热销背后的产品逻辑',
+  },
+  {
+    id: 'insight-sukamuljo', time: '00:05',
+    title: '苏卡穆约吉德翁何时登顶男双世界第一？',
+    summary: '印尼男双组合苏卡穆约/吉德翁凭借连续的巡回赛冠军和稳定积分，在赛季中段登顶世界第一，并以快速连贯和前场压迫打法成为当时最具代表性的男双组合。',
+    source: '羽毛球杂志', sourceTone: 'bg-emerald-600', relatedCount: 8,
+    tags: [{ prop: '人物', val: '苏卡穆约' }, { prop: '人物', val: '吉德翁' }, { prop: '指标', val: '世界第一' }],
+    content: '苏卡穆约与吉德翁在多个超级系列赛中连续夺冠，依靠稳定积分完成世界排名跃升。他们的速度、轮转以及前三拍控制，改变了男双比赛对节奏的理解。',
+    articleTitle: '小黄人组合登顶世界第一的关键节点',
+  },
+  {
+    id: 'insight-economy', time: '00:05',
+    title: '消费市场观察：文化产品与年轻用户的新连接',
+    summary: '文化内容消费正从单次购买转向收藏、社群和知识服务相结合的长期关系，年轻用户更看重版本质量、内容策划与持续互动。',
+    source: '第一财经', sourceTone: 'bg-amber-500', relatedCount: 6,
+    tags: [{ prop: '行业', val: '文化消费' }, { prop: '群体', val: '年轻用户' }],
+    content: '越来越多文化产品开始以策划型内容、收藏价值和社群服务形成差异化。用户不再只比较价格，也会判断内容的可信度、版本稀缺性与长期服务能力。',
+    articleTitle: '年轻人为何愿意为高质量文化内容买单',
+  },
 ];
 
 const agentRows = [
@@ -126,20 +169,71 @@ function TaskCard({ onNavigate }) {
   </CardShell>;
 }
 
-function InsightCard({ onNavigate }) {
+// 每 10 秒滚动推入一条新事件，卡片样式与「信息源搜索」的每日事件一致
+function InsightCard({ onNavigate, onOpenEvent }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 10000);
+    return () => clearInterval(timer);
+  }, []);
+  const len = insightEvents.length;
+  // 由 tick 推导可见的 3 条：始终是连续的三个事件，不会重复
+  const feed = [0, 1, 2].map(i => {
+    const step = tick - i;
+    const event = insightEvents[((step % len) + len) % len];
+    return { ...event, key: `${event.id}-${step}`, fresh: i === 0 && tick > 0 };
+  });
   return <CardShell icon="ri-lightbulb-line" title="今日洞察" action="查看全部事件" onAction={() => onNavigate('sources', { navPage: 'search' })}>
-    <div className="scrollbar relative max-h-[360px] overflow-y-auto px-5 pb-5 before:absolute before:bottom-8 before:left-[72px] before:top-2 before:w-px before:bg-border/60">
-      {insightEvents.map(item => <div key={item.title} className="relative flex gap-4 py-2.5">
-        <div className="w-10 shrink-0 pt-0.5 text-right text-xs font-medium text-muted-foreground">{item.time}</div>
-        <span className="relative z-10 mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary ring-4 ring-white/80" />
-        <div className="min-w-0 flex-1 rounded-xl p-1 transition hover:bg-white/60">
-          <strong className="line-clamp-1 block text-sm leading-snug">{item.title}</strong>
-          <p className="line-clamp-1 mt-1 text-xs leading-5 text-muted-foreground">{item.desc}</p>
-          <div className="mt-2"><Badge variant="secondary" className="px-2 text-[10px] font-normal">{item.source}</Badge></div>
+    <div className="space-y-2.5 px-5 pb-5">
+      {feed.map(event => <div key={event.key} className={`grid grid-cols-[42px_1fr] ${event.fresh ? 'ticker-in' : ''}`}>
+        <div className="relative pr-2.5 pt-2.5 text-left text-xs text-slate-400">
+          {event.time}
+          <span className="absolute bottom-0 right-0 top-0 w-px bg-slate-200" />
+        </div>
+        <div className="ml-3 overflow-hidden rounded-lg border border-neutral-100 bg-[#fffdfa] shadow-[0_2px_8px_rgba(15,23,42,0.05)]">
+          <button onClick={() => onOpenEvent(event)} className="block w-full px-4 pb-2.5 pt-3 text-left transition hover:bg-orange-50/30">
+            <h2 className="line-clamp-1 text-[14px] font-semibold leading-5 text-neutral-900">{event.title}</h2>
+            <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-slate-500">{event.summary}</p>
+            <span className="mt-2 flex items-center gap-1.5 text-[11px] text-neutral-400">
+              <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${event.sourceTone}`}>{event.source.slice(0, 1)}</span>
+              {event.source}
+            </span>
+          </button>
         </div>
       </div>)}
     </div>
   </CardShell>;
+}
+
+// 事件详情弹窗：与「信息源搜索」页的事件详情保持一致
+function InsightEventDialog({ event, onClose }) {
+  if (!event) return null;
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5" onClick={onClose}>
+    <div className="flex w-full max-w-[512px] flex-col overflow-hidden rounded-xl bg-white shadow-2xl" style={{ maxHeight: '82vh' }} onClick={e => e.stopPropagation()}>
+      <div className="flex shrink-0 items-center justify-between px-6 pb-4 pt-7">
+        <h2 className="text-[20px] font-semibold text-neutral-900">事件详情</h2>
+        <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-800 transition hover:bg-neutral-100" aria-label="关闭">
+          <i className="ri-close-line text-2xl" />
+        </button>
+      </div>
+      <div className="mx-6 border-t border-neutral-200" />
+      <div className="flex-1 overflow-y-auto px-10 pb-8 pt-4">
+        <h3 className="text-[17px] font-semibold leading-6 text-neutral-900">{event.title}</h3>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {event.tags.map((tag, index) => (
+            <span key={`${tag.prop}-${index}`} className="bg-neutral-50 px-2 py-1 text-[11px] text-neutral-400">{tag.prop}-{tag.val}</span>
+          ))}
+        </div>
+        <p className="mt-2 bg-neutral-50 px-5 py-3 text-[13px] leading-5 text-neutral-600">{event.summary}</p>
+        <div className="mt-4 flex items-center justify-between text-xs">
+          <span className="text-neutral-500">原文参考</span>
+          <button className="text-blue-500 transition hover:underline">查看链接</button>
+        </div>
+        <div className="mt-8 text-center text-[19px] font-semibold leading-7 text-slate-700">{event.articleTitle}</div>
+        <div className="mt-5 whitespace-pre-line text-[14px] leading-8 text-slate-600">{event.content}</div>
+      </div>
+    </div>
+  </div>;
 }
 
 function AgentListCard({ onNavigate, agents, onCreateAgent }) {
@@ -205,11 +299,18 @@ function SourceStatusCard({ onNavigate, onOpenSource }) {
     <div className="px-5 pb-2 pt-3 text-sm font-semibold">异常信息源</div>
     <div className="scrollbar max-h-48 space-y-2 overflow-y-auto px-5 pb-5 pr-4">
       {abnormalSources.length
-        ? abnormalSources.map(s => <div key={s.name} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-xl border border-rose-100 bg-rose-50/50 px-3 py-2.5 transition hover:bg-rose-50">
-            <span className="flex min-w-0 items-center gap-2.5"><i className={`${s.status === '未同步' ? 'ri-time-line text-slate-400' : 'ri-error-warning-fill text-rose-500'}`} /><span className="min-w-0"><strong className="block truncate text-sm">{s.name}</strong><span className="block text-[11px] text-muted-foreground">{s.time}</span></span></span>
-            <Badge variant={s.variant} className="px-2 text-[10px] font-normal">{s.status}</Badge>
-            <span className="flex items-center gap-1"><Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-muted-foreground hover:bg-white hover:text-primary" onClick={() => onOpenSource(s.name)} title={`查看${s.name}详情`} aria-label={`查看${s.name}详情`}><i className="ri-arrow-right-s-line text-lg" /></Button><Button variant="outline" size="sm" className="h-7 rounded-lg px-2.5 text-xs" onClick={() => onNavigate('sources')}>重试</Button></span>
-          </div>)
+        ? abnormalSources.map(s => {
+            const failed = s.status !== '未同步';
+            return <div key={s.name} role="button" tabIndex={0} onClick={() => onOpenSource(s.name)}
+              onKeyDown={e => { if (e.key === 'Enter') onOpenSource(s.name); }}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-border/40 bg-white/60 px-4 py-2.5 text-left transition hover:border-primary/30 hover:bg-white/90">
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white ${failed ? 'bg-rose-400' : 'bg-slate-400'}`}><i className={failed ? 'ri-error-warning-line' : 'ri-time-line'} /></span>
+              <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{s.name}</strong><span className="block text-[11px] text-muted-foreground">{s.time}</span></span>
+              <Badge variant={s.variant} className="shrink-0 px-2 text-[10px] font-normal">{s.status}</Badge>
+              <Button variant="outline" size="sm" className="h-7 shrink-0 rounded-lg px-2.5 text-xs" onClick={e => { e.stopPropagation(); onNavigate('sources'); }}>重试</Button>
+              <i className="ri-arrow-right-s-line text-muted-foreground/50" />
+            </div>;
+          })
         : <div className="flex items-center gap-2 rounded-xl bg-emerald-50/70 px-3 py-3 text-sm text-emerald-700"><i className="ri-checkbox-circle-fill" />全部信息源运行正常</div>}
     </div>
   </CardShell>;
@@ -317,8 +418,8 @@ function ChatDock({ open, onToggle, messages, onSend, pending }) {
   if (!open) {
     return <button onClick={onToggle} title={`展开${desktopAssistantName}`} aria-label={`展开${desktopAssistantName}`}
       className="group fixed right-5 top-1/2 z-30 -translate-y-1/2">
-      <span className="glass-strong flex h-14 w-14 items-center justify-center rounded-2xl p-1.5 shadow-xl shadow-orange-500/10 transition group-hover:scale-105 group-active:scale-95">
-        <span className="relative flex h-full w-full items-center justify-center rounded-xl bg-primary text-xl text-primary-foreground ring-1 ring-white/60">
+      <span className="glass-strong flex h-14 w-14 items-center justify-center rounded-full p-1.5 shadow-xl shadow-orange-500/10 transition group-hover:scale-105 group-active:scale-95">
+        <span className="relative flex h-full w-full items-center justify-center rounded-full bg-primary text-xl text-primary-foreground ring-1 ring-white/60">
           <i className="ri-sparkling-2-line" />
           <span className="breathe absolute -right-1 -top-1 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
         </span>
@@ -329,8 +430,8 @@ function ChatDock({ open, onToggle, messages, onSend, pending }) {
   return <aside className="glass-strong fixed bottom-24 right-4 top-[72px] z-30 flex w-[352px] flex-col overflow-hidden rounded-3xl shadow-2xl">
     <header className="flex items-center justify-between border-b border-border/40 px-4 py-3">
       <div className="flex items-center gap-2.5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground"><i className="ri-sparkling-2-line" /></span>
-        <div><div className="text-sm font-semibold leading-tight">{desktopAssistantName}</div><div className="text-[11px] leading-tight text-muted-foreground">调度 Agent · 常驻桌面</div></div>
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"><i className="ri-sparkling-2-line" /></span>
+        <div className="text-sm font-semibold leading-tight">{desktopAssistantName}</div>
       </div>
       <Button variant="ghost" size="icon-sm" onClick={onToggle} title="收起" aria-label="收起对话框"><i className="ri-contract-right-line" /></Button>
     </header>
@@ -372,6 +473,7 @@ export default function DesktopPage({ onNavigate }) {
   const [agents, setAgents] = useState(agentRows);
   const [showCreateAgent, setShowCreateAgent] = useState(false);
   const [momentDetail, setMomentDetail] = useState(null);
+  const [insightDetail, setInsightDetail] = useState(null);
 
   // 卡片顺序：可拖拽交换
   const [cardOrder, setCardOrder] = useState(['moments', 'insights', 'tasks', 'agents', 'sources']);
@@ -418,7 +520,7 @@ export default function DesktopPage({ onNavigate }) {
               onDragEnd={() => { dragIndex.current = null; setOverIndex(null); }}
               className={`fade-in-up rounded-2xl transition ${id === 'moments' ? 'lg:col-span-2' : ''} ${overIndex === index ? 'scale-[0.99] ring-2 ring-primary/50' : ''}`}
               style={{ animationDelay: `${0.08 * (index + 1)}s` }}>
-              <CardComp onNavigate={onNavigate} {...(id === 'agents' ? { agents, onCreateAgent: () => setShowCreateAgent(true) } : {})} {...(id === 'moments' ? { onOpenMoment: setMomentDetail } : {})} {...(id === 'sources' ? { onOpenSource: name => onNavigate('sources', { detailName: name }) } : {})} />
+              <CardComp onNavigate={onNavigate} {...(id === 'agents' ? { agents, onCreateAgent: () => setShowCreateAgent(true) } : {})} {...(id === 'moments' ? { onOpenMoment: setMomentDetail } : {})} {...(id === 'insights' ? { onOpenEvent: setInsightDetail } : {})} {...(id === 'sources' ? { onOpenSource: name => onNavigate('sources', { detailName: name }) } : {})} />
             </div>;
           })}
         </div>
@@ -428,5 +530,6 @@ export default function DesktopPage({ onNavigate }) {
     <GlassDock active="desktop" onNavigate={onNavigate} />
     <CreateAgentDialog open={showCreateAgent} onOpenChange={setShowCreateAgent} onCreate={agent => setAgents(prev => [agent, ...prev])} />
     <MomentDetailDialog moment={momentDetail} onClose={() => setMomentDetail(null)} />
+    <InsightEventDialog event={insightDetail} onClose={() => setInsightDetail(null)} />
   </PageShell>;
 }
