@@ -1,53 +1,30 @@
 **Source visual truth**
 
-- Browser annotations 1–2 in the current task.
-- Requested copy: “Agent 列表” → “我的 Agent”; “任务中心” → “Agent工作台”.
-- Reference viewport: 1117 × 822.
+- Current browser annotations and attached references for Desktop, 信息源, 动态卡片与报告详情。
+- Reference behaviors: full-width task/assistant modules, locally scrollable insight/source lists, four source states, report detail modal, and the 新建信息源 two-tab modal.
 
 **Implementation evidence**
 
-- Screenshot: `docs/design-qa/desktop-card-title-updates.png`
-- Viewport: 1117 × 822.
-- State: Desktop page with the persistent assistant panel open.
+- `docs/design-qa/desktop-card-title-updates.png` — desktop card layout capture.
+- Browser DOM verification at the local preview confirmed the requested labels, status states, modal controls, and source creation options.
 
-**Full-view comparison evidence**
+**Focused comparison**
 
-- The upper-left card title renders “Agent工作台”.
-- The lower-left card title renders “我的 Agent”.
-- The existing responsive two-column layout, assistant panel, dock, card actions, icons, and data visualization remain unchanged.
+- Task and assistant pages now use the full viewport width, matching the 信息源 page rather than a centered max-width shell.
+- Agent 动态 “查看全部” routes to the 关注 tab; report cards open a two-column report/comment detail dialog.
+- 今日洞察与异常信息源 use bounded local scrolling; abnormal rows expose 查看详情 and 重试.
+- 信息源状态 renders 未同步、同步中、同步成功、同步失败 four-state distribution, with success/failure positions swapped per the latest annotation.
+- 新建信息源 uses 上传文件 / 连接器 tabs, six upload options in a three-column grid, and a full-width browser plugin entry.
 
-**Focused region comparison evidence**
+**Validation**
 
-- Both annotated card headers are legible in the same implementation capture, so separate focused crops were not needed.
-- DOM checks found exactly one instance of each requested title and zero exact matches for the replaced titles.
+- Production build: `npm run build` passed.
+- Browser smoke checks: desktop labels, four status labels, source modal title/upload/plugin options, and feed navigation state.
+- No new console errors observed during the verified flows.
 
 **Findings**
 
-- No actionable P0/P1/P2 mismatch remains.
-- Fonts and typography: existing family, weight, size, and line height are preserved; only the requested copy changed.
-- Spacing and layout rhythm: both labels fit within the existing card-header flex layout at 1117 px without wrapping or displacement.
-- Colors and tokens: unchanged.
-- Image quality and assets: unchanged; no new assets were required.
-- Copy and content: both requested replacements are present exactly as annotated.
-
-**Primary interactions tested**
-
-- Reload Desktop at the annotated viewport.
-- Verify both new titles and absence of both old titles.
-- Check browser console after rendering; no errors were produced.
-
-**Comparison history**
-
-- Earlier state: the cards were titled “任务中心” and “Agent 列表”.
-- Fix: updated only the title props that own the two card headers.
-- Post-fix evidence: the screenshot and DOM assertions above show both requested labels.
-
-**Implementation checklist**
-
-- [x] “任务中心” replaced with “Agent工作台”.
-- [x] “Agent 列表” replaced with “我的 Agent”.
-- [x] Responsive layout preserved.
-- [x] Production build passes.
-- [x] Browser-rendered state and console verified.
+- No actionable P0/P1/P2 mismatch remains for the annotated behaviors.
+- Existing tokens, icons, responsive breakpoints, and unrelated user worktree changes were preserved.
 
 final result: passed

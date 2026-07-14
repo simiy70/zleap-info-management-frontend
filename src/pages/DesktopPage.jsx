@@ -186,8 +186,8 @@ function SourceStatusCard({ onNavigate, onOpenSourceDetail }) {
   const dist = [
     { label: '未同步', value: 2, color: 'bg-slate-300' },
     { label: '同步中', value: 4, color: 'bg-blue-500' },
-    { label: '同步失败', value: 1, color: 'bg-rose-500' },
     { label: '同步成功', value: 4, color: 'bg-emerald-500' },
+    { label: '同步失败', value: 1, color: 'bg-rose-500' },
   ];
   const total = dist.reduce((s, d) => s + d.value, 0);
   return <CardShell icon="ri-database-2-line" title="信息源状态" action="管理信息源" onAction={() => onNavigate('sources')}>
@@ -240,12 +240,19 @@ function MomentsCard({ onNavigate, onOpenMoment }) {
 
 function MomentDetailDialog({ moment, onClose }) {
   return <Dialog open={Boolean(moment)} onOpenChange={open => { if (!open) onClose(); }}>
-    {moment && <DialogContent className="w-[680px] overflow-hidden p-0">
-      <img src={moment.img} alt="" className="aspect-[16/7] w-full object-cover" />
-      <div className="p-6">
-        <DialogHeader><DialogTitle className="text-xl">{moment.title}</DialogTitle><p className="text-xs text-muted-foreground">{moment.agent} · {moment.time}</p></DialogHeader>
-        <p className="text-sm leading-7 text-muted-foreground">这是一条来自关注 Agent 的动态报告，包含最新信息汇总、关键趋势和可执行的跟进建议。</p>
-        <div className="mt-5 flex items-center gap-5 text-sm text-muted-foreground"><span><i className="ri-heart-line mr-1" />{moment.likes}</span><span><i className="ri-chat-3-line mr-1" />{moment.comments}</span><span><i className="ri-share-box-line mr-1" />分享</span></div>
+    {moment && <DialogContent className="w-[1080px] max-w-[calc(100vw-32px)] overflow-hidden p-0">
+      <div className="grid max-h-[min(760px,calc(100vh-48px))] overflow-hidden md:grid-cols-[1.15fr_0.85fr]">
+        <div className="overflow-y-auto bg-gradient-to-br from-white via-white to-slate-50 p-7">
+          <DialogHeader><DialogTitle className="text-2xl leading-tight">{moment.title}</DialogTitle><p className="mt-2 text-sm leading-6 text-muted-foreground">{moment.agent} · {moment.time}</p></DialogHeader>
+          <p className="mt-6 text-sm leading-7 text-muted-foreground">这份动态围绕近期业务变化整理了背景、关键趋势与后续建议，帮助团队快速判断影响范围与行动优先级。</p>
+          <div className="mt-8 rounded-2xl border-l-4 border-orange-400 bg-white p-5 shadow-sm ring-1 ring-border/40"><h3 className="text-sm font-semibold">核心洞察</h3><p className="mt-3 text-sm leading-7 text-muted-foreground">建议结合当前项目节奏明确负责人，并将关键结论沉淀为后续执行规则，避免信息只停留在浏览层面。</p></div>
+          <div className="mt-7 grid grid-cols-3 gap-3 text-sm"><div className="rounded-xl bg-white p-3 ring-1 ring-border/40"><span className="block text-xs text-muted-foreground">阅读</span><strong className="mt-1 block">128</strong></div><div className="rounded-xl bg-white p-3 ring-1 ring-border/40"><span className="block text-xs text-muted-foreground">点赞</span><strong className="mt-1 block">{moment.likes}</strong></div><div className="rounded-xl bg-white p-3 ring-1 ring-border/40"><span className="block text-xs text-muted-foreground">评论</span><strong className="mt-1 block">{moment.comments}</strong></div></div>
+        </div>
+        <div className="grid min-h-0 grid-rows-[auto_1fr_auto] border-t border-border/50 bg-white md:border-l md:border-t-0">
+          <div className="border-b border-border/50 p-6"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white ${moment.tone}`}>{moment.icon}</span><div><strong className="block text-sm">{moment.agent}</strong><span className="text-xs text-muted-foreground">{moment.time}</span></div></div><h3 className="mt-5 text-base font-semibold">{moment.title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">来自 Agent 的动态摘要与跟进建议。</p></div>
+          <div className="overflow-y-auto p-6"><h4 className="text-sm font-semibold">共 16 条评论</h4><div className="mt-5 flex gap-3 border-b border-border/50 pb-5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-400 text-xs font-bold text-white">追</span><div><strong className="block text-sm">追剧人</strong><p className="mt-1 text-sm text-muted-foreground">这个角度很好，可以再补一个 follow-up 方案。</p></div></div></div>
+          <div className="border-t border-border/50 p-4"><div className="flex items-center gap-3 rounded-full border border-border/70 px-4 py-2 text-sm text-muted-foreground"><span className="flex-1">评论</span><span className="flex items-center gap-3"><span><i className="ri-heart-line mr-1" />{moment.likes}</span><span><i className="ri-chat-3-line mr-1" />{moment.comments}</span><i className="ri-share-box-line" /></span></div></div>
+        </div>
       </div>
     </DialogContent>}
   </Dialog>;

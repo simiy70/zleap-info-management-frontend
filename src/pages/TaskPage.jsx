@@ -77,7 +77,7 @@ export default function TaskPage({ onNavigate }) {
 
   return <PageShell>
     <GlassHeader />
-    <main className="mx-auto max-w-[1280px] px-6 pb-32 pt-5">
+    <main className="w-full px-8 pb-32 pt-5">
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-[362px] max-w-full">
           <i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground" />

@@ -460,8 +460,8 @@ export default function AssistantPage({ onNavigate, initialPrompt = "", initialC
         {/* ── Header：logo + user ── */}
         <GlassHeader />
 
-        {/* ── Main（居中布局，与桌面/动态统一） ── */}
-        <main className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-1 flex-col overflow-hidden">
+        {/* ── Main（全图幅布局，与信息源一致） ── */}
+        <main className="flex w-full min-w-0 flex-1 flex-col overflow-hidden">
 
           {/* 二级菜单：左边视图 tab + 右边子筛选/搜索/创建 */}
           <div className="glass-soft flex shrink-0 items-center gap-4 border-x-0 border-t-0 px-8 py-2.5">

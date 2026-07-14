@@ -10753,6 +10753,7 @@ function InfoSourcePage({ onNavigate }) {
   const [showAddMode, setShowAddMode]     = useState("upload"); // "upload" | "connector"
   const [showAddInitSrc, setShowAddInitSrc] = useState(null);
   const [showCreateSource, setShowCreateSource]     = useState(false);
+  const [createSourceTab, setCreateSourceTab]       = useState("upload");
   const [showConnectorPicker, setShowConnectorPicker] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [pendingFolderName, setPendingFolderName] = useState(null);
@@ -11179,7 +11180,7 @@ function InfoSourcePage({ onNavigate }) {
                   <div className="flex items-center gap-2">
                     {/* 新建：统一入口（上传 / 连接器 等在弹窗中选择） */}
                     {((navPage === "mine" && page === "home") || (page !== "home" && currentFolder?.owner === CURRENT_USER)) && (
-                      <UIButton onClick={() => setShowCreateSource(true)}>
+                      <UIButton onClick={() => { setCreateSourceTab("upload"); setShowCreateSource(true); }}>
                         <i className="ri-add-line text-lg" />新建
                       </UIButton>
                     )}
@@ -11267,8 +11268,12 @@ function InfoSourcePage({ onNavigate }) {
               <h2 className="text-[17px] font-bold">新建信息源</h2>
               <button onClick={() => setShowCreateSource(false)} className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-white/70 hover:text-neutral-700" aria-label="关闭"><i className="ri-close-line text-xl" /></button>
             </div>
-            <div className="mt-4 text-xs font-medium text-neutral-500">上传导入</div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-4 flex items-center gap-6 border-b border-neutral-200/70 text-sm">
+              <button onClick={() => setCreateSourceTab("upload")} className={`border-b-2 pb-2.5 font-medium ${createSourceTab === "upload" ? "border-orange-500 text-orange-500" : "border-transparent text-neutral-500"}`}>上传文件</button>
+              <button onClick={() => setCreateSourceTab("connector")} className={`border-b-2 pb-2.5 font-medium ${createSourceTab === "connector" ? "border-orange-500 text-orange-500" : "border-transparent text-neutral-500"}`}>连接器</button>
+            </div>
+            {createSourceTab === "upload" && <>
+            <div className="mt-5 grid grid-cols-3 gap-2">
               {[
                 { label: "文档上传", icon: "ri-file-text-line", desc: "PDF · Word · MD · TXT · 图片" },
                 { label: "音频上传", icon: "ri-music-2-line", desc: "主流音视频格式 · 自动转写" },
@@ -11284,19 +11289,22 @@ function InfoSourcePage({ onNavigate }) {
                 </button>
               ))}
             </div>
-            <div className="mt-4 text-xs font-medium text-neutral-500">自动同步</div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-1 gap-2">
+              <a href="https://chromewebstore.google.com/detail/zleap" target="_blank" rel="noopener noreferrer" onClick={() => setShowCreateSource(false)}
+                className="flex items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-white/45 px-3.5 py-3 text-left ring-1 ring-border/30 transition hover:bg-white hover:ring-orange-200">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-lg text-accent-foreground"><i className="ri-chrome-line" /></span>
+                <span className="min-w-0"><span className="flex items-center gap-1 text-sm font-medium">浏览器插件 <i className="ri-external-link-line text-xs text-neutral-400" /></span><span className="block truncate text-[11px] text-neutral-400">浏览时一键保存网页内容</span></span>
+                <i className="ri-download-line ml-auto text-neutral-400" />
+              </a>
+            </div>
+            </>}
+            {createSourceTab === "connector" && <div className="mt-5 grid grid-cols-3 gap-2">
               <button onClick={() => pickCreateOption("连接器")}
                 className="flex items-center gap-3 rounded-xl bg-white/60 px-3.5 py-3 text-left ring-1 ring-border/50 transition hover:bg-white hover:ring-orange-200">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-lg text-accent-foreground"><i className="ri-plug-line" /></span>
                 <span className="min-w-0"><span className="block text-sm font-medium">连接器</span><span className="block truncate text-[11px] text-neutral-400">RSS · 网页爬虫 · GitHub · 机器人等</span></span>
               </button>
-              <a href="https://chromewebstore.google.com/detail/zleap" target="_blank" rel="noopener noreferrer" onClick={() => setShowCreateSource(false)}
-                className="flex items-center gap-3 rounded-xl bg-white/60 px-3.5 py-3 text-left ring-1 ring-border/50 transition hover:bg-white hover:ring-orange-200">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-lg text-accent-foreground"><i className="ri-chrome-line" /></span>
-                <span className="min-w-0"><span className="flex items-center gap-1 text-sm font-medium">浏览器插件 <i className="ri-external-link-line text-xs text-neutral-400" /></span><span className="block truncate text-[11px] text-neutral-400">浏览时一键保存网页内容</span></span>
-              </a>
-            </div>
+            </div>}
           </div>
         </>
       )}
