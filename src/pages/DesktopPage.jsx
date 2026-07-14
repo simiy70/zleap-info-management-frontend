@@ -46,7 +46,7 @@ const abnormalSources = [
   { name: 'CRM Webhook', status: '未同步', variant: 'secondary', time: '3 小时前', desc: 'Webhook 尚未收到首条事件，请检查来源配置。' },
 ];
 
-const quickPrompts = ['帮我盯竞品动态', '总结这周的信息源', '派个活给 Claude Code'];
+const quickPrompts = ['分析小米YU7销量增长原因', '列出当前Agent运行任务', '说明信息源同步失败处理方法'];
 const currentUser = 'Zhang Wei';
 const desktopAssistantName = `${currentUser}的Agent`;
 
@@ -335,17 +335,22 @@ function ChatDock({ open, onToggle, messages, onSend, pending }) {
       <Button variant="ghost" size="icon-sm" onClick={onToggle} title="收起" aria-label="收起对话框"><i className="ri-contract-right-line" /></Button>
     </header>
 
-    <div ref={listRef} className="scrollbar flex-1 space-y-3 overflow-y-auto px-4 py-4">
-      {messages.map((m, i) => m.role === 'user'
-        ? <div key={i} className="ml-10 rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-primary-foreground">{m.text}</div>
-        : <div key={i} className="mr-6 rounded-2xl rounded-bl-md bg-white/80 px-3.5 py-2.5 text-sm leading-relaxed text-foreground ring-1 ring-border/40">{m.text}</div>)}
-      {pending && <div className="mr-6 flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-white/80 px-3.5 py-3 ring-1 ring-border/40">
-        {[0, 1, 2].map(n => <span key={n} className="breathe h-1.5 w-1.5 rounded-full bg-muted-foreground/60" style={{ animationDelay: `${n * 0.2}s` }} />)}
+    <div ref={listRef} className="scrollbar flex-1 overflow-y-auto px-4 py-4">
+      {messages.length === 0 && !pending ? (
+        <div className="flex min-h-full flex-col justify-center px-2 pb-16">
+          <div className="text-[25px] font-bold leading-tight tracking-tight"><span className="bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">{currentUser}，你好</span><br />今天需要我做些什么？</div>
+          <div className="mt-8 flex flex-col items-start gap-2">
+            {quickPrompts.map(text => <button key={text} onClick={() => onSend(text)} className="rounded-full bg-slate-100 px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-700">{text}</button>)}
+          </div>
+        </div>
+      ) : <div className="space-y-3">
+        {messages.map((m, i) => m.role === 'user'
+          ? <div key={i} className="ml-10 rounded-2xl rounded-br-md bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-primary-foreground">{m.text}</div>
+          : <div key={i} className="mr-6 rounded-2xl rounded-bl-md bg-white/80 px-3.5 py-2.5 text-sm leading-relaxed text-foreground ring-1 ring-border/40">{m.text}</div>)}
+        {pending && <div className="mr-6 flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-white/80 px-3.5 py-3 ring-1 ring-border/40">
+          {[0, 1, 2].map(n => <span key={n} className="breathe h-1.5 w-1.5 rounded-full bg-muted-foreground/60" style={{ animationDelay: `${n * 0.2}s` }} />)}
+        </div>}
       </div>}
-    </div>
-
-    <div className="flex flex-wrap gap-1.5 px-4 pb-2">
-      {quickPrompts.map(text => <button key={text} onClick={() => onSend(text)} className="rounded-full border border-border/60 bg-white/60 px-2.5 py-1 text-[11px] text-muted-foreground transition hover:border-primary/40 hover:text-primary">{text}</button>)}
     </div>
 
     <div className="flex items-center gap-2 border-t border-border/40 p-3">
@@ -361,9 +366,7 @@ const cardComponents = { tasks: TaskCard, insights: InsightCard, agents: AgentLi
 
 export default function DesktopPage({ onNavigate }) {
   const [chatOpen, setChatOpen] = useState(true);
-  const [messages, setMessages] = useState([
-    { role: 'assistant', text: `${greeting()}，我是你的专属助手。直接布置任务，我会调度合适的 Agent 完成，进度同步到「任务中心」。` },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [pending, setPending] = useState(false);
   const replyTimer = useRef(null);
   const [agents, setAgents] = useState(agentRows);
