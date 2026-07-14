@@ -237,9 +237,7 @@ function InsightEventDialog({ event, onClose }) {
 }
 
 function AgentListCard({ onNavigate, agents, onCreateAgent }) {
-  const mounted = useMounted();
   const ranked = [...agents].sort((a, b) => b.posts - a.posts);
-  const max = Math.max(ranked[0]?.posts || 0, 1);
   const openChat = name => onNavigate('assistant', { chat: name });
   return <CardShell icon="ri-robot-2-line" title="我的 Agent" action="管理 Agent" onAction={() => onNavigate('assistant')}>
     <div className="flex justify-end px-5 pb-3 text-xs text-muted-foreground">
@@ -248,16 +246,13 @@ function AgentListCard({ onNavigate, agents, onCreateAgent }) {
     <div className="space-y-0.5 px-5 pb-3">
       {ranked.map(a => <div key={a.name} onClick={() => openChat(a.name)} role="button" tabIndex={0}
         onKeyDown={e => { if (e.key === 'Enter') openChat(a.name); }}
-        className="group/row grid w-full cursor-pointer grid-cols-[124px_1fr_auto_auto] items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-white/60">
+        className="group/row grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-white/60">
         <span className="flex min-w-0 items-center gap-2.5">
           <span className="relative shrink-0">
             <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white ${a.tone}`}>{a.icon}</span>
             {a.isPublic === false && <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-white ring-2 ring-white" title="私密 Agent"><i className="ri-lock-fill text-[8px]" /></span>}
           </span>
           <strong className="min-w-0 truncate text-sm">{a.name}</strong>
-        </span>
-        <span className="h-2.5 overflow-hidden rounded-full bg-muted">
-          <span className={`block h-full rounded-full ${a.tone}`} style={{ width: mounted ? `${a.posts / max * 100}%` : '0%', transition: 'width .9s ease' }} />
         </span>
         <span className="w-11 text-right"><strong className="text-sm">{a.posts}</strong><span className="block text-[11px] text-emerald-600">+{a.today}</span></span>
         <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base text-muted-foreground/40 transition group-hover/row:bg-accent group-hover/row:text-primary" title={`和 ${a.name} 对话`}>
