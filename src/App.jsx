@@ -10064,31 +10064,33 @@ function ReportPage({ treeSearch: treeSearchProp, setTreeSearch: setTreeSearchPr
 }
 
 /* ─── CONNECTOR PICKER MODAL ─── */
+const connectorGroups = [
+  { label: "网络抓取", items: [
+    { label: "网页爬虫",  Icon: Icon.Globe,  desc: "定时抓取网页正文与更新" },
+    { label: "RSS 订阅",  Icon: Icon.Rss,    desc: "持续同步 RSS 文章流" },
+    { label: "搜索引擎",  Icon: Icon.Search, desc: "按关键词定期抓取资讯" },
+  ]},
+  { label: "知识库", items: [
+    { label: "飞书知识库", Icon: Icon.BookOpen, desc: "定时同步飞书知识库变更文档" },
+  ]},
+  { label: "代码平台", items: [
+    { label: "GitHub", Icon: Icon.GitHub, desc: "授权读取 README · Issues",    isOAuth: true },
+    { label: "GitLab", Icon: Icon.Code,   desc: "授权读取项目文档与 Issues",   isOAuth: true },
+    { label: "Gitee",  Icon: Icon.Code,   desc: "授权读取 README · Issues",    isOAuth: true },
+  ]},
+  { label: "消息平台", items: [
+    { label: "企微机器人",    Icon: Icon.Msg, desc: "企业微信群聊消息同步" },
+    { label: "飞书机器人",    Icon: Icon.Msg, desc: "飞书群聊 · 文档 · 日历" },
+    { label: "飞书CLI",      Icon: Icon.Msg, desc: "飞书群聊消息拉取 · CLI 授权" },
+    { label: "SaleSmartly",  Icon: Icon.Msg, desc: "客服会话与工单归档" },
+  ]},
+  { label: "开发接口", items: [
+    { label: "API 接入", Icon: Icon.Code, desc: "自定义结构化数据推送" },
+  ]},
+];
+
 function ConnectorPickerModal({ onClose, onSelect }) {
-  const groups = [
-    { label: "网络抓取", items: [
-      { label: "网页爬虫",  Icon: Icon.Globe,  desc: "定时抓取网页正文与更新" },
-      { label: "RSS 订阅",  Icon: Icon.Rss,    desc: "持续同步 RSS 文章流" },
-      { label: "搜索引擎",  Icon: Icon.Search, desc: "按关键词定期抓取资讯" },
-    ]},
-    { label: "知识库", items: [
-      { label: "飞书知识库", Icon: Icon.BookOpen, desc: "定时同步飞书知识库变更文档" },
-    ]},
-    { label: "代码平台", items: [
-      { label: "GitHub", Icon: Icon.GitHub, desc: "授权读取 README · Issues",    isOAuth: true },
-      { label: "GitLab", Icon: Icon.Code,   desc: "授权读取项目文档与 Issues",   isOAuth: true },
-      { label: "Gitee",  Icon: Icon.Code,   desc: "授权读取 README · Issues",    isOAuth: true },
-    ]},
-    { label: "消息平台", items: [
-      { label: "企微机器人",    Icon: Icon.Msg, desc: "企业微信群聊消息同步" },
-      { label: "飞书机器人",    Icon: Icon.Msg, desc: "飞书群聊 · 文档 · 日历" },
-      { label: "飞书CLI",      Icon: Icon.Msg, desc: "飞书群聊消息拉取 · CLI 授权" },
-      { label: "SaleSmartly",  Icon: Icon.Msg, desc: "客服会话与工单归档" },
-    ]},
-    { label: "开发接口", items: [
-      { label: "API 接入", Icon: Icon.Code, desc: "自定义结构化数据推送" },
-    ]},
-  ];
+  const groups = connectorGroups;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4" onClick={onClose}>
       <div className="relative flex w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl" style={{maxHeight:"85vh"}} onClick={e => e.stopPropagation()}>
@@ -10950,6 +10952,14 @@ function InfoSourcePage({ onNavigate, initialNavPage, initialDetailName }) {
     setShowAdd(true);
   };
 
+  // 连接器 tab 里直接选中某个连接器 → 进入连接器配置
+  const pickConnector = (item) => {
+    setShowCreateSource(false);
+    setShowAddInitSrc(allSources.find(s => s.label === item.label) || null);
+    setShowAddMode("connector");
+    setShowAdd(true);
+  };
+
   const handleSaveNote = ({ title, content }) => {
     const newNote = {
       id: Date.now(), name: title, kind: "笔记", source: "笔记", owner: CURRENT_USER, scope: "mine",
@@ -11150,6 +11160,12 @@ function InfoSourcePage({ onNavigate, initialNavPage, initialDetailName }) {
                       onClearFilters={clearAllFilters}
                     />
                   )}
+                  {/* 新建：统一入口（上传 / 连接器 等在弹窗中选择） */}
+                  {((navPage === "mine" && page === "home") || (page !== "home" && currentFolder?.owner === CURRENT_USER)) && (
+                    <UIButton size="sm" className="h-8 px-3.5" onClick={() => { setCreateSourceTab("upload"); setShowCreateSource(true); }}>
+                      <i className="ri-add-line text-base" />新建
+                    </UIButton>
+                  )}
                 </div>
               );
             })()}
@@ -11182,30 +11198,17 @@ function InfoSourcePage({ onNavigate, initialNavPage, initialDetailName }) {
             <div className="flex flex-1 overflow-hidden">
               <div className="flex flex-1 flex-col overflow-auto px-8 py-6">
 
-                {/* Toolbar 行 2：面包屑 + 筛选/上传/连接器 */}
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    {page !== "home" && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <button onClick={() => { setPage("home"); setCurrentFolder(null); setSearch(""); setFilterType(new Set()); setFilterStatus(new Set()); setFilterPerm(new Set()); }}
-                          className="flex items-center gap-1 text-neutral-400 transition-colors hover:text-neutral-700">
-                          <Icon.Back /><span>{navPage === "shared" ? "与我共享" : "我的信息源"}</span>
-                        </button>
-                        <span className="text-neutral-300">/</span>
-                        <span className="font-semibold text-neutral-800">{currentFolder?.name}</span>
-                      </div>
-                    )}
+                {/* Toolbar 行 2：面包屑（仅文件夹内页展示） */}
+                {page !== "home" && (
+                  <div className="mb-4 flex items-center gap-2 text-sm">
+                    <button onClick={() => { setPage("home"); setCurrentFolder(null); setSearch(""); setFilterType(new Set()); setFilterStatus(new Set()); setFilterPerm(new Set()); }}
+                      className="flex items-center gap-1 text-neutral-400 transition-colors hover:text-neutral-700">
+                      <Icon.Back /><span>{navPage === "shared" ? "与我共享" : "我的信息源"}</span>
+                    </button>
+                    <span className="text-neutral-300">/</span>
+                    <span className="font-semibold text-neutral-800">{currentFolder?.name}</span>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    {/* 新建：统一入口（上传 / 连接器 等在弹窗中选择） */}
-                    {((navPage === "mine" && page === "home") || (page !== "home" && currentFolder?.owner === CURRENT_USER)) && (
-                      <UIButton onClick={() => { setCreateSourceTab("upload"); setShowCreateSource(true); }}>
-                        <i className="ri-add-line text-lg" />新建
-                      </UIButton>
-                    )}
-                  </div>
-                </div>
+                )}
 
                 {/* 空状态 */}
                 {page === "folder" && items.length === 0 && (
@@ -11284,8 +11287,11 @@ function InfoSourcePage({ onNavigate, initialNavPage, initialDetailName }) {
         <>
           <button className="overlay-in fixed inset-0 z-40 cursor-default bg-slate-900/35 backdrop-blur-sm" onClick={() => setShowCreateSource(false)} aria-label="关闭" />
           <div className="dialog-in glass-strong fixed left-1/2 top-1/2 z-50 w-[560px] max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 rounded-3xl p-6 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[17px] font-bold">新建信息源</h2>
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-[17px] font-bold">新建信息源</h2>
+                {createSourceTab === "connector" && <p className="mt-1 text-[13px] text-neutral-500">授权后定时同步外部数据到信息源</p>}
+              </div>
               <button onClick={() => setShowCreateSource(false)} className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-white/70 hover:text-neutral-700" aria-label="关闭"><i className="ri-close-line text-xl" /></button>
             </div>
             <div className="mt-4 flex items-center gap-6 border-b border-neutral-200/70 text-sm">
@@ -11318,12 +11324,27 @@ function InfoSourcePage({ onNavigate, initialNavPage, initialDetailName }) {
               </a>
             </div>
             </>}
-            {createSourceTab === "connector" && <div className="mt-5 grid grid-cols-3 gap-2">
-              <button onClick={() => pickCreateOption("连接器")}
-                className="flex items-center gap-3 rounded-xl bg-white/60 px-3.5 py-3 text-left ring-1 ring-border/50 transition hover:bg-white hover:ring-orange-200">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-lg text-accent-foreground"><i className="ri-plug-line" /></span>
-                <span className="min-w-0"><span className="block text-sm font-medium">连接器</span><span className="block truncate text-[11px] text-neutral-400">RSS · 网页爬虫 · GitHub · 机器人等</span></span>
-              </button>
+            {createSourceTab === "connector" && <div className="scrollbar mt-5 max-h-[54vh] space-y-4 overflow-y-auto pr-1">
+              {connectorGroups.map(g => (
+                <div key={g.label}>
+                  <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">{g.label}</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {g.items.map(item => (
+                      <button key={item.label} onClick={() => pickConnector(item)}
+                        className="flex items-start gap-3 rounded-xl bg-white/60 px-3.5 py-3 text-left ring-1 ring-border/50 transition hover:bg-white hover:ring-orange-200">
+                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-lg text-accent-foreground"><item.Icon /></span>
+                        <span className="min-w-0">
+                          <span className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-sm font-medium">{item.label}</span>
+                            {item.isOAuth && <span className="rounded bg-blue-50 px-1 py-0.5 text-[10px] font-medium text-blue-500">OAuth</span>}
+                          </span>
+                          <span className="mt-0.5 block truncate text-[11px] leading-snug text-neutral-400">{item.desc}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>}
           </div>
         </>
