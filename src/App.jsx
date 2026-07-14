@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import AssistantPage from './pages/AssistantPage.jsx';
 import DesktopPage from './pages/DesktopPage.jsx';
 import TaskPage from './pages/TaskPage.jsx';
+import { PageShell, GlassHeader, GlassDock } from './components/shell';
+import { Button as UIButton } from './components/ui/button';
 import FeedPage from './pages/FeedPage.jsx';
 import folderOrange from './assets/folders/folder-orange.png';
 import folderOrangeLocked from './assets/folders/folder-orange-locked.png';
@@ -2228,8 +2230,8 @@ function HeaderFilterButton({ filterType, filterStatus, filterPerm, allTypeOptio
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={closePanel} />
-          <div className="absolute right-0 top-9 z-40 w-80 overflow-visible rounded-2xl border border-neutral-200 bg-white shadow-xl">
-            <div className="border-b border-neutral-100 px-4 py-3">
+          <div className="glass-strong absolute right-0 top-9 z-40 w-80 overflow-visible rounded-2xl shadow-xl">
+            <div className="border-b border-border/40 px-4 py-3">
               <div className="text-sm font-semibold text-neutral-800">筛选</div>
             </div>
             <div className="space-y-3 px-4 py-4">
@@ -2370,7 +2372,7 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
       <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
       {onCreateNew && (
         <div onClick={onCreateNew}
-          className="group relative flex min-h-[168px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 bg-white/60 text-neutral-300 transition-all hover:border-orange-300 hover:bg-orange-50/20 hover:text-orange-400">
+          className="group relative flex min-h-[168px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-neutral-200 bg-white/40 text-neutral-300 backdrop-blur transition-all hover:border-orange-300 hover:bg-orange-50/30 hover:text-orange-400">
           <i className="ri-add-line text-[42px] font-light leading-none" />
           <div className="mt-3 text-sm font-medium transition-colors group-hover:text-orange-500">新建信息源</div>
         </div>
@@ -10750,8 +10752,7 @@ function InfoSourcePage({ onNavigate }) {
   const [showAdd, setShowAdd]             = useState(false);
   const [showAddMode, setShowAddMode]     = useState("upload"); // "upload" | "connector"
   const [showAddInitSrc, setShowAddInitSrc] = useState(null);
-  const [showUploadMenu, setShowUploadMenu]         = useState(false);
-  const [uploadMenuAnchor, setUploadMenuAnchor]     = useState({ top: 0, left: 0 });
+  const [showCreateSource, setShowCreateSource]     = useState(false);
   const [showConnectorPicker, setShowConnectorPicker] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [pendingFolderName, setPendingFolderName] = useState(null);
@@ -10906,13 +10907,26 @@ function InfoSourcePage({ onNavigate }) {
     setPage("folder");
   };
 
-  const openUploadMenu = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const menuW = 240;
-    let left = r.left + r.width / 2 - menuW / 2;
-    left = Math.max(8, Math.min(left, window.innerWidth - menuW - 8));
-    setUploadMenuAnchor({ top: r.bottom + 6, left });
-    setShowUploadMenu(v => !v);
+  // 「新建」弹窗里选中某个来源类型后的统一分发
+  const pickCreateOption = (label) => {
+    setShowCreateSource(false);
+    if (label === "连接器") { setShowConnectorPicker(true); return; }
+    if (label === "笔记") {
+      if (page === "folder" && currentFolder) {
+        const blankNote = {
+          id: Date.now(), name: "新建笔记", kind: "笔记", source: "笔记",
+          owner: CURRENT_USER, updated: "刚刚", status: "同步完成", desc: "", _isNew: true,
+          folderId: currentFolder.id,
+        };
+        setCustomItems(prev => [blankNote, ...prev]);
+        setDetailItem(blankNote);
+      } else {
+        setShowNotePicker(true);
+      }
+      return;
+    }
+    setShowAddInitSrc(allSources.find(s => s.label === label) || null);
+    setShowAdd(true);
   };
 
   const handleSaveNote = ({ title, content }) => {
@@ -11047,26 +11061,17 @@ function InfoSourcePage({ onNavigate }) {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f4f1] text-neutral-900">
+    <PageShell>
       <div className="flex min-h-screen flex-col">
 
-        {/* ── Header：logo + user ── */}
-        <header className="flex h-14 shrink-0 items-center justify-between gap-6 border-b border-neutral-200/60 bg-[#efede9] px-6">
-          <div className="shrink-0 text-xl font-bold tracking-tight">zleap</div>
-          <div className="flex shrink-0 items-center gap-2.5">
-            <div className="text-right">
-              <div className="text-sm font-medium leading-tight text-neutral-700">Simiy</div>
-              <div className="text-[11px] leading-tight text-neutral-400">企业版</div>
-            </div>
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-xs font-bold text-white">S</div>
-          </div>
-        </header>
+        {/* ── Header：磨玻璃顶栏（与其他模块一致） ── */}
+        <GlassHeader user="Simiy" />
 
         {/* ── Main ── */}
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
 
           {/* ── 二级菜单：tab 行（与搜索、视图切换合并在一起） ── */}
-          <div className="flex shrink-0 items-center gap-4 border-b border-neutral-200/60 bg-white px-8 py-2.5">
+          <div className="glass-soft flex shrink-0 items-center gap-4 border-x-0 border-t-0 px-8 py-2.5">
             <nav className="flex min-w-0 flex-1 items-center gap-1">
               {navItems.map(nav => (
                 <React.Fragment key={nav.id}>
@@ -11154,7 +11159,7 @@ function InfoSourcePage({ onNavigate }) {
             </div>
           ) : (
             <div className="flex flex-1 overflow-hidden">
-              <div className={`flex flex-1 flex-col overflow-auto px-8 py-6 ${view === "card" ? "bg-white" : ""}`}>
+              <div className="flex flex-1 flex-col overflow-auto px-8 py-6">
 
                 {/* Toolbar 行 2：面包屑 + 筛选/上传/连接器 */}
                 <div className="mb-4 flex items-center justify-between gap-3">
@@ -11172,25 +11177,11 @@ function InfoSourcePage({ onNavigate }) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* 上传文件 / 连接器 */}
+                    {/* 新建：统一入口（上传 / 连接器 等在弹窗中选择） */}
                     {((navPage === "mine" && page === "home") || (page !== "home" && currentFolder?.owner === CURRENT_USER)) && (
-                      <div className={`flex items-center ${view === "card" ? "gap-3" : "gap-1 rounded-xl bg-neutral-100/80 p-0.5"}`}>
-                        <button onClick={openUploadMenu}
-                          className={`flex items-center gap-1.5 rounded-lg text-sm transition ${view === "card"
-                            ? "h-9 bg-neutral-900 px-4 text-white shadow-sm hover:bg-neutral-800"
-                            : `h-7 px-2.5 ${showUploadMenu ? "bg-white text-orange-600 shadow-sm" : "text-neutral-600 hover:bg-white hover:text-neutral-800"}`}`}>
-                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                          <span>上传文件</span>
-                          <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className={`transition-transform ${showUploadMenu ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                        <button onClick={() => setShowConnectorPicker(true)}
-                          className={`flex items-center gap-1.5 rounded-lg text-sm transition ${view === "card"
-                            ? "h-9 bg-neutral-900 px-4 text-white shadow-sm hover:bg-neutral-800"
-                            : "h-7 px-2.5 text-neutral-600 hover:bg-white hover:text-neutral-800"}`}>
-                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                          <span>连接器</span>
-                        </button>
-                      </div>
+                      <UIButton onClick={() => setShowCreateSource(true)}>
+                        <i className="ri-add-line text-lg" />新建
+                      </UIButton>
                     )}
                   </div>
                 </div>
@@ -11218,11 +11209,8 @@ function InfoSourcePage({ onNavigate }) {
                     <h3 className="text-[17px] font-bold text-neutral-800">这里还没有内容</h3>
                     {currentFolder?.owner === CURRENT_USER ? (
                       <p className="mt-2 max-w-xs text-center text-sm leading-relaxed text-neutral-400">
-                        <button onClick={openUploadMenu}
-                          className="text-neutral-500 underline underline-offset-2 decoration-neutral-300 hover:text-orange-500 hover:decoration-orange-300 transition-colors">上传文件</button>
-                        {" "}或{" "}
-                        <button onClick={() => setShowConnectorPicker(true)}
-                          className="text-neutral-500 underline underline-offset-2 decoration-neutral-300 hover:text-orange-500 hover:decoration-orange-300 transition-colors">添加连接器</button>
+                        <button onClick={() => setShowCreateSource(true)}
+                          className="text-neutral-500 underline underline-offset-2 decoration-neutral-300 hover:text-orange-500 hover:decoration-orange-300 transition-colors">新建信息源</button>
                         ，让信息自动流入这里
                       </p>
                     ) : (
@@ -11267,131 +11255,48 @@ function InfoSourcePage({ onNavigate }) {
         </main>
       </div>
 
-      {/* ── 一级菜单：底部悬浮 dock（磨玻璃） ── */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-5 z-30 flex justify-center">
-        <nav className="pointer-events-auto flex items-end gap-1 rounded-3xl border border-white/60 bg-white/55 px-3 py-2.5 shadow-xl shadow-neutral-900/10 backdrop-blur-xl">
-          {[
-            {
-              id: "desktop", label: "桌面",
-              iconBg: "bg-orange-100", iconColor: "text-orange-500",
-              icon: (
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
-              ),
-            },
-            {
-              id: "sources", label: "信息源", active: true,
-              iconBg: "bg-violet-100", iconColor: "text-violet-600",
-              icon: (
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="2.6"/><path d="M4 5v6c0 1.44 3.58 2.6 8 2.6s8-1.16 8-2.6V5"/><path d="M4 11v6c0 1.44 3.58 2.6 8 2.6s8-1.16 8-2.6v-6"/></svg>
-              ),
-            },
-            {
-              id: "assistant", label: "助手",
-              iconBg: "bg-emerald-100", iconColor: "text-emerald-600",
-              icon: (
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
-              ),
-            },
-            {
-              id: "tasks", label: "任务",
-              iconBg: "bg-blue-100", iconColor: "text-blue-600",
-              icon: (
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><polyline points="8.5 12.5 11 15 15.8 10"/></svg>
-              ),
-            },
-            {
-              id: "feed", label: "动态",
-              iconBg: "bg-rose-100", iconColor: "text-rose-500",
-              icon: (
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.4"/></svg>
-              ),
-            },
-          ].map(item => (
-            <button key={item.id} onClick={() => onNavigate(item.id)}
-              className={`group flex w-16 flex-col items-center gap-1 rounded-2xl px-1.5 py-1.5 transition-colors ${item.active ? "bg-white/60" : "hover:bg-white/50"}`}>
-              <span className="relative">
-                <span className={`flex h-11 w-11 items-center justify-center rounded-[14px] ${item.iconBg} ${item.iconColor} transition-transform group-hover:scale-[1.04] group-active:scale-95`}>
-                  {item.icon}
-                </span>
-                {item.badge?.type === "count" && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white ring-2 ring-white/80">
-                    {item.badge.value}
-                  </span>
-                )}
-                {item.badge?.type === "dot" && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-orange-500 ring-2 ring-white/80" />
-                )}
-              </span>
-              <span className={`text-[11px] leading-none ${item.active ? "font-medium text-neutral-800" : "text-neutral-500"}`}>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
+      {/* ── 一级菜单：底部悬浮 dock（磨玻璃，共享组件） ── */}
+      <GlassDock active="sources" onNavigate={onNavigate} />
 
-      {/* 全局上传下拉菜单 — fixed 定位跟随触发点 */}
-      {showUploadMenu && (
+      {/* 新建信息源弹窗：上传导入 / 自动同步 统一入口 */}
+      {showCreateSource && (
         <>
-          <div className="fixed inset-0 z-30" onClick={() => setShowUploadMenu(false)} />
-          <div className="fixed z-40 w-60 rounded-xl border border-neutral-200 bg-white py-1.5 shadow-xl"
-            style={{ top: uploadMenuAnchor.top, left: uploadMenuAnchor.left }}>
-            {[
-              { label: "文档上传", icon: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>, desc: "PDF · Word · MD · TXT · 图片" },
-              { label: "音频上传", icon: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>, desc: "主流音视频格式 · 自动转写" },
-              { label: "实时录音", icon: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>, desc: "实时录音并同步转写" },
-              { label: "笔记",     icon: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>, desc: "在编辑器中直接编写保存" },
-            ].map(opt => (
-              <button key={opt.label} onClick={() => {
-                setShowUploadMenu(false);
-                if (opt.label === "笔记") {
-                  if (page === "folder" && currentFolder) {
-                    // 直接在当前文件夹内创建空白笔记，进入 SingleDocPage（含文件上传空状态）
-                    const blankNote = {
-                      id: Date.now(), name: "新建笔记", kind: "笔记", source: "笔记",
-                      owner: CURRENT_USER, updated: "刚刚", status: "同步完成", desc: "", _isNew: true,
-                      folderId: currentFolder.id,
-                    };
-                    setCustomItems(prev => [blankNote, ...prev]);
-                    setDetailItem(blankNote);
-                  } else {
-                    setShowNotePicker(true);
-                  }
-                }
-                else { setShowAddInitSrc(allSources.find(s => s.label === opt.label) || null); setShowAdd(true); }
-              }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-neutral-50">
-                <span className="text-neutral-500">{opt.icon}</span>
-                <div><div className="text-sm font-medium text-neutral-800">{opt.label}</div><div className="text-[11px] text-neutral-400">{opt.desc}</div></div>
+          <button className="overlay-in fixed inset-0 z-40 cursor-default bg-slate-900/35 backdrop-blur-sm" onClick={() => setShowCreateSource(false)} aria-label="关闭" />
+          <div className="dialog-in glass-strong fixed left-1/2 top-1/2 z-50 w-[560px] max-w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 rounded-3xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[17px] font-bold">新建信息源</h2>
+              <button onClick={() => setShowCreateSource(false)} className="flex h-8 w-8 items-center justify-center rounded-lg text-neutral-400 transition hover:bg-white/70 hover:text-neutral-700" aria-label="关闭"><i className="ri-close-line text-xl" /></button>
+            </div>
+            <div className="mt-4 text-xs font-medium text-neutral-500">上传导入</div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {[
+                { label: "文档上传", icon: "ri-file-text-line", desc: "PDF · Word · MD · TXT · 图片" },
+                { label: "音频上传", icon: "ri-music-2-line", desc: "主流音视频格式 · 自动转写" },
+                { label: "实时录音", icon: "ri-mic-line", desc: "实时录音并同步转写" },
+                { label: "笔记", icon: "ri-edit-line", desc: "在编辑器中直接编写保存" },
+                { label: "语雀知识库", icon: "ri-book-2-line", desc: "上传导出包，选择需导入的文档" },
+                { label: "思源笔记", icon: "ri-sticky-note-line", desc: "上传导出包，选择需导入的文档" },
+              ].map(opt => (
+                <button key={opt.label} onClick={() => pickCreateOption(opt.label)}
+                  className="flex items-center gap-3 rounded-xl bg-white/60 px-3.5 py-3 text-left ring-1 ring-border/50 transition hover:bg-white hover:ring-orange-200">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-lg text-accent-foreground"><i className={opt.icon} /></span>
+                  <span className="min-w-0"><span className="block text-sm font-medium">{opt.label}</span><span className="block truncate text-[11px] text-neutral-400">{opt.desc}</span></span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 text-xs font-medium text-neutral-500">自动同步</div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button onClick={() => pickCreateOption("连接器")}
+                className="flex items-center gap-3 rounded-xl bg-white/60 px-3.5 py-3 text-left ring-1 ring-border/50 transition hover:bg-white hover:ring-orange-200">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-lg text-accent-foreground"><i className="ri-plug-line" /></span>
+                <span className="min-w-0"><span className="block text-sm font-medium">连接器</span><span className="block truncate text-[11px] text-neutral-400">RSS · 网页爬虫 · GitHub · 机器人等</span></span>
               </button>
-            ))}
-            <div className="mx-3 my-1 border-t border-neutral-100" />
-            {[
-              { label: "语雀知识库", icon: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M17 8C8 10 5.9 16.17 3.82 19.34a1 1 0 0 0 1.47 1.32C7.27 18.93 11.34 17 17 17c4.42 0 6.5-3 6.5-6S21.42 5 17 5c-4 0-8 2.5-10 5"/><path d="M3 21c1.5-3 4-5 9-5"/></svg>, desc: "上传导出包，选择需导入的文档" },
-              { label: "思源笔记",   icon: <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>, desc: "上传导出包，选择需导入的文档" },
-            ].map(opt => (
-              <button key={opt.label} onClick={() => { setShowUploadMenu(false); setShowAddInitSrc(allSources.find(s => s.label === opt.label) || null); setShowAdd(true); }}
-                className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-neutral-50">
-                <span className="text-neutral-500">{opt.icon}</span>
-                <div><div className="text-sm font-medium text-neutral-800">{opt.label}</div><div className="text-[11px] text-neutral-400">{opt.desc}</div></div>
-              </button>
-            ))}
-            <div className="mx-3 my-1 border-t border-neutral-100" />
-            <a href="https://chromewebstore.google.com/detail/zleap" target="_blank" rel="noopener noreferrer"
-              onClick={() => setShowUploadMenu(false)}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-neutral-50 rounded-lg group">
-              <span className="text-neutral-500">
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/><line x1="10.88" y1="21.94" x2="15.46" y2="14"/></svg>
-              </span>
-              <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                <div>
-                  <div className="text-sm font-medium text-neutral-800">浏览器插件</div>
-                  <div className="text-[11px] text-neutral-400">浏览时一键保存网页内容</div>
-                </div>
-                <span className="shrink-0 flex items-center gap-0.5 text-[10px] text-neutral-400 group-hover:text-orange-400 transition-colors">
-                  下载
-                  <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                </span>
-              </div>
-            </a>
+              <a href="https://chromewebstore.google.com/detail/zleap" target="_blank" rel="noopener noreferrer" onClick={() => setShowCreateSource(false)}
+                className="flex items-center gap-3 rounded-xl bg-white/60 px-3.5 py-3 text-left ring-1 ring-border/50 transition hover:bg-white hover:ring-orange-200">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-lg text-accent-foreground"><i className="ri-chrome-line" /></span>
+                <span className="min-w-0"><span className="flex items-center gap-1 text-sm font-medium">浏览器插件 <i className="ri-external-link-line text-xs text-neutral-400" /></span><span className="block truncate text-[11px] text-neutral-400">浏览时一键保存网页内容</span></span>
+              </a>
+            </div>
           </div>
         </>
       )}
@@ -11596,7 +11501,7 @@ function InfoSourcePage({ onNavigate }) {
           </div>
         );
       })()}
-    </div>
+    </PageShell>
   );
 }
 
@@ -11604,17 +11509,23 @@ function InfoSourcePage({ onNavigate }) {
 function App() {
   const [primaryPage, setPrimaryPage] = useState("desktop");
   const [assistantPrompt, setAssistantPrompt] = useState("");
+  const [assistantChat, setAssistantChat] = useState("");
+  const [feedInitialView, setFeedInitialView] = useState(null);
   const navigate = (page, payload) => {
     if (["desktop", "sources", "assistant", "tasks", "feed"].includes(page)) {
-      if (page === "assistant") setAssistantPrompt(payload?.prompt || "");
+      if (page === "assistant") {
+        setAssistantPrompt(payload?.prompt || "");
+        setAssistantChat(payload?.chat || "");
+      }
+      if (page === "feed") setFeedInitialView(payload?.view || null);
       setPrimaryPage(page);
     }
   };
 
   if (primaryPage === "desktop") return <DesktopPage onNavigate={navigate} />;
-  if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} initialPrompt={assistantPrompt} />;
+  if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} initialPrompt={assistantPrompt} initialChat={assistantChat} />;
   if (primaryPage === "tasks") return <TaskPage onNavigate={navigate} />;
-  if (primaryPage === "feed") return <FeedPage onNavigate={navigate} />;
+  if (primaryPage === "feed") return <FeedPage onNavigate={navigate} initialView={feedInitialView} />;
   return <InfoSourcePage onNavigate={navigate} />;
 }
 
