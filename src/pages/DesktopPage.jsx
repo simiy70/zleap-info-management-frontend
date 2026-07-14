@@ -80,14 +80,12 @@ const followedMoments = [
   { agent: '内容生成助手', icon: '文', tone: 'bg-blue-500', time: '1 小时前', title: '小米 YU7 上市首周销量分析报告', img: 'https://images.unsplash.com/photo-1493238792000-8113da705763?auto=format&fit=crop&w=640&q=80', likes: 42, comments: 21 },
 ];
 
-// 卡片列表只展示异常的信息源；正常源汇总在分布条里
+// 卡片列表只展示同步失败的信息源；未同步和正常源仅汇总在分布条里
 const abnormalSources = [
   { name: '客户数据库', status: '同步失败', variant: 'destructive', time: '30 分钟前', desc: '客户主数据同步失败，最近一次重试未完成。' },
   { name: 'GitHub Issues 同步', status: '同步失败', variant: 'destructive', time: '42 分钟前', desc: 'Issue 增量接口返回权限错误，需要重新授权。' },
-  { name: '会议录音转写', status: '未同步', variant: 'secondary', time: '1 小时前', desc: '等待首次同步，尚未发现可解析的录音文件。' },
   { name: '竞品价格爬虫', status: '同步失败', variant: 'destructive', time: '2 小时前', desc: '目标页面响应超时，系统将在下一轮自动重试。' },
-  { name: 'CRM Webhook', status: '未同步', variant: 'secondary', time: '3 小时前', desc: 'Webhook 尚未收到首条事件，请检查来源配置。' },
-];
+].filter(source => source.status === '同步失败');
 
 const quickPrompts = ['分析小米YU7销量增长原因', '列出当前Agent运行任务', '说明信息源同步失败处理方法'];
 const currentUser = 'Zhang Wei';
@@ -300,11 +298,10 @@ function SourceStatusCard({ onNavigate, onOpenSource }) {
     <div className="scrollbar max-h-48 space-y-2 overflow-y-auto px-5 pb-5 pr-4">
       {abnormalSources.length
         ? abnormalSources.map(s => {
-            const failed = s.status !== '未同步';
             return <div key={s.name} role="button" tabIndex={0} onClick={() => onOpenSource(s.name)}
               onKeyDown={e => { if (e.key === 'Enter') onOpenSource(s.name); }}
               className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-border/40 bg-white/60 px-4 py-2.5 text-left transition hover:border-primary/30 hover:bg-white/90">
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white ${failed ? 'bg-rose-400' : 'bg-slate-400'}`}><i className={failed ? 'ri-error-warning-line' : 'ri-time-line'} /></span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-400 text-white"><i className="ri-error-warning-line" /></span>
               <span className="min-w-0 flex-1"><strong className="block truncate text-sm">{s.name}</strong><span className="block text-[11px] text-muted-foreground">{s.time}</span></span>
               <Badge variant={s.variant} className="shrink-0 px-2 text-[10px] font-normal">{s.status}</Badge>
               <Button variant="outline" size="sm" className="h-7 shrink-0 rounded-lg px-2.5 text-xs" onClick={e => { e.stopPropagation(); onNavigate('sources'); }}>重试</Button>
