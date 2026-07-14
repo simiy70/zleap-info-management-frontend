@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { PageShell, GlassHeader, GlassDock } from '../components/shell';
+import { PageShell, GlassHeader, GlassDock, NewItemCard } from '../components/shell';
 
 /* ─── SVG ICONS ─── */
 const Icon = {
@@ -163,7 +163,7 @@ function AssistantRow({ item, onContext }) {
 }
 
 /* ─── 管理视图 ─── */
-function ManagementView({ items, view }) {
+function ManagementView({ items, view, onCreateNew }) {
   if (view === "list") {
     return (
       <div className="space-y-2 p-6">
@@ -173,14 +173,15 @@ function ManagementView({ items, view }) {
   }
   return (
     <div className="grid grid-cols-2 gap-3 p-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {onCreateNew && <NewItemCard label="创建助手" onClick={onCreateNew} className="min-h-full" />}
       {items.map(a => <AssistantCard key={a.id} item={a} />)}
     </div>
   );
 }
 
 /* ─── 对话视图 ─── */
-function ChatView({ initialDraft = "" }) {
-  const [activeChatId, setActiveChatId] = useState(101);
+function ChatView({ initialDraft = "", initialChatName = "" }) {
+  const [activeChatId, setActiveChatId] = useState(() => chatSessions.find(s => s.name === initialChatName)?.id ?? 101);
   const [chatSearch, setChatSearch] = useState("");
   const [draft, setDraft] = useState(initialDraft);
   const [visibleSessionCount, setVisibleSessionCount] = useState(6);
@@ -428,11 +429,12 @@ function CreateAssistantModal({ onClose, onCreate }) {
   );
 }
 
-export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
-  const [viewMode, setViewMode] = useState(initialPrompt ? "chat" : "management"); // "chat" | "management"
+export default function AssistantPage({ onNavigate, initialPrompt = "", initialChat = "" }) {
+  const [viewMode, setViewMode] = useState(initialPrompt || initialChat ? "chat" : "management"); // "chat" | "management"
   const [subTab, setSubTab]     = useState("created");     // "mine" | "created" | "recommend"
   const [search, setSearch]     = useState("");
-  const [filterActive, setFilterActive] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [followFilter, setFollowFilter] = useState("all"); // "all" | "followed" | "unfollowed"
   const [showCreate, setShowCreate] = useState(false);
   const [customAssistants, setCustomAssistants] = useState([]);
   const handleCreate = (a) => {
@@ -445,10 +447,11 @@ export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
     if (subTab === "mine")      base = base.filter(a => a.followed);
     if (subTab === "created")   base = base.filter(a => a.creator === "这里最…");
     if (subTab === "recommend") base = all;
+    if (followFilter !== "all") base = base.filter(a => a.followed === (followFilter === "followed"));
     const kw = search.trim().toLowerCase();
     if (!kw) return base;
     return base.filter(a => a.name.toLowerCase().includes(kw) || a.desc.toLowerCase().includes(kw));
-  }, [subTab, search, customAssistants]);
+  }, [subTab, search, customAssistants, followFilter]);
 
   return (
     <PageShell>
@@ -494,10 +497,27 @@ export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
                       </button>
                     )}
                   </div>
-                  <button onClick={() => setFilterActive(active => !active)} aria-pressed={filterActive} title="筛选"
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition ${filterActive ? "bg-orange-50 text-orange-500 ring-1 ring-orange-200" : "bg-neutral-100/80 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700"}`}>
-                    <Icon.Filter />
-                  </button>
+                  <div className="relative">
+                    <button onClick={() => setFilterOpen(v => !v)} aria-expanded={filterOpen} title="筛选" aria-label="筛选"
+                      className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition ${filterOpen || followFilter !== "all" ? "bg-orange-50 text-orange-500 ring-1 ring-orange-200" : "bg-neutral-100/80 text-neutral-500 hover:bg-neutral-200/80 hover:text-neutral-700"}`}>
+                      <Icon.Filter />
+                      {followFilter !== "all" && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white" />}
+                    </button>
+                    {filterOpen && (
+                      <>
+                        <button className="fixed inset-0 z-30 cursor-default" onClick={() => setFilterOpen(false)} aria-label="关闭筛选" />
+                        <div className="glass-strong absolute right-0 top-10 z-40 w-48 overflow-hidden rounded-2xl p-1 shadow-xl">
+                          <div className="px-3 py-2 text-xs font-semibold text-neutral-500">筛选</div>
+                          {[["all", "全部助手"], ["followed", "已关注"], ["unfollowed", "未关注"]].map(([value, label]) => (
+                            <button key={value} onClick={() => { setFollowFilter(value); setFilterOpen(false); }}
+                              className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-white/70 ${followFilter === value ? "bg-orange-50/80 text-orange-600" : "text-neutral-700"}`}>
+                              <span className="flex-1">{label}</span>{followFilter === value && <Icon.Check />}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -525,8 +545,8 @@ export default function AssistantPage({ onNavigate, initialPrompt = "" }) {
           {/* 内容区 */}
           <div className="flex-1 overflow-y-auto pb-32">
             {viewMode === "management"
-              ? <ManagementView items={filteredAssistants} view="card" />
-              : <ChatView initialDraft={initialPrompt} />}
+              ? <ManagementView items={filteredAssistants} view="card" onCreateNew={() => setShowCreate(true)} />
+              : <ChatView initialDraft={initialPrompt} initialChatName={initialChat} />}
           </div>
         </main>
       </div>

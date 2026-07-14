@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { PageShell, GlassHeader, GlassDock } from '../components/shell';
+import { PageShell, GlassHeader, GlassDock, NewItemCard } from '../components/shell';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -86,12 +86,15 @@ export default function TaskPage({ onNavigate }) {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger>
-            <Button variant={status !== "all" ? "secondary" : "outline"} className={status !== "all" ? "bg-accent text-accent-foreground" : ""}>
-              <i className="ri-filter-3-line" />{statusLabels[status]}
+            <Button variant="outline" size="icon" aria-label="筛选任务状态" title="筛选任务状态"
+              className={`relative text-lg ${status !== "all" ? "border-orange-200 bg-accent text-primary" : ""}`}>
+              <i className="ri-filter-3-line" />
+              {status !== "all" && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary ring-2 ring-white" />}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-32">
-            {Object.entries(statusLabels).map(([value, label]) => <DropdownMenuItem key={value} onClick={() => setStatus(value)}>
+          <DropdownMenuContent align="start" className="w-36">
+            <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">筛选</div>
+            {Object.entries(statusLabels).map(([value, label]) => <DropdownMenuItem key={value} onClick={() => setStatus(value)} className={status === value ? "bg-accent text-accent-foreground" : ""}>
               <span className="flex-1">{label}</span>{status === value && <i className="ri-check-line" />}
             </DropdownMenuItem>)}
           </DropdownMenuContent>
@@ -101,7 +104,10 @@ export default function TaskPage({ onNavigate }) {
       </div>
 
       {filtered.length
-        ? <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{filtered.map(task => <TaskCard key={task.id} task={task} onToggle={id => setTasks(v => v.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t))} onDelete={id => setTasks(v => v.filter(t => t.id !== id))} onDetails={setDetail} />)}</section>
+        ? <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <NewItemCard label="新建任务" onClick={() => setShowCreate(true)} className="min-h-[168px]" />
+            {filtered.map(task => <TaskCard key={task.id} task={task} onToggle={id => setTasks(v => v.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t))} onDelete={id => setTasks(v => v.filter(t => t.id !== id))} onDetails={setDetail} />)}
+          </section>
         : <section className="mt-24 flex flex-col items-center text-muted-foreground"><i className="ri-inbox-2-line text-5xl" /><div className="mt-3 text-sm">没有找到符合条件的任务</div><Button variant="link" size="sm" className="mt-2" onClick={clear}>重置筛选</Button></section>}
     </main>
     <GlassDock active="tasks" onNavigate={onNavigate} />

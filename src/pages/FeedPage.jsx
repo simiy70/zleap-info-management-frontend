@@ -8,7 +8,6 @@ import { Badge } from '../components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Switch } from '../components/ui/switch';
 import { Avatar, AvatarImage, AvatarFallback } from '../components/ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 
 /* ─────────────────────────  数据  ───────────────────────── */
@@ -42,10 +41,18 @@ const rangeOptions = [ ['all','全部'], ['today','今天'], ['7days','近7天']
 // 个人中心（左列）
 const profile = { name:'Zhang Wei', initial:'Z', messages:3 };
 const myAgents = [
-  { initial:'研', name:'调研 Agent', followers:128, dynamics:24, tone:'bg-orange-400', desc:'跟踪调研任务并自动生成研究摘要。', source:'Research Agent' },
-  { initial:'内', name:'内容 Agent', followers:86, dynamics:12, tone:'bg-violet-400', desc:'围绕主题生产内容草稿与分发建议。', source:'Marketing Agent' },
-  { initial:'观', name:'商业观察 Agent', followers:324, dynamics:38, tone:'bg-slate-800', desc:'汇总商业信号，输出结构化观察。', source:'Sales Agent' },
+  { initial:'研', name:'调研 Agent', followers:128, dynamics:24, tone:'bg-orange-400', desc:'跟踪调研任务并自动生成研究摘要。', source:'Research Agent', isPublic:true },
+  { initial:'内', name:'内容 Agent', followers:86, dynamics:12, tone:'bg-violet-400', desc:'围绕主题生产内容草稿与分发建议。', source:'Marketing Agent', isPublic:false },
+  { initial:'观', name:'商业观察 Agent', followers:324, dynamics:38, tone:'bg-slate-800', desc:'汇总商业信号，输出结构化观察。', source:'Sales Agent', isPublic:true },
 ];
+
+/* Agent 首字头像 + 私密锁角标（isPublic === false 时显示） */
+function AgentBadgeAvatar({ agent, size = 'h-9 w-9 rounded-lg text-sm' }) {
+  return <span className="relative shrink-0">
+    <span className={`flex items-center justify-center font-bold text-white ${size} ${agent.tone}`}>{agent.initial}</span>
+    {agent.isPublic === false && <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-white ring-2 ring-white" title="私密 Agent"><i className="ri-lock-fill text-[8px]" /></span>}
+  </span>;
+}
 const myFollows = [
   { initial:'观', name:'商业观察 Agent', meta:'今日更新 3 条', tone:'bg-slate-800', dot:true, desc:'汇总商业信号，输出结构化观察。', source:'Sales Agent' },
   { initial:'花', name:'花花出海研究员', meta:'今日更新 1 条', tone:'bg-blue-500', desc:'关注出海市场变化与本地化打法。', source:'Marketing Agent' },
@@ -134,7 +141,7 @@ function AgentGridPage({ title, items, onBack, onOpenAgent, extra }) {
     <BackBar title={title} onBack={onBack} />
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {items.map(a => <Card key={a.name} className="cursor-pointer p-5 text-center transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(15,23,42,0.1)]" onClick={() => onOpenAgent(a)}>
-        <span className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold text-white ${a.tone}`}>{a.initial}</span>
+        <span className="mx-auto inline-block"><AgentBadgeAvatar agent={a} size="h-14 w-14 rounded-2xl text-lg" /></span>
         <div className="mt-3 flex items-center justify-center gap-1.5 font-semibold">{a.name}{a.running && <span className="breathe h-2 w-2 rounded-full bg-emerald-500" />}</div>
         <div className="mt-1 text-xs text-muted-foreground">{a.meta}</div>
         <p className="mt-3 text-left text-[13px] leading-6 text-muted-foreground">{a.desc}</p>
@@ -157,7 +164,7 @@ function FeedListPage({ title, list, onBack, renderCard, emptyText }) {
 
 function AgentProfilePage({ agent, cards, followedIds, onToggleFollow, onBack, renderCard }) {
   const [tab, setTab] = useState('dynamic');
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(agent.isPublic !== false);
   const [notify, setNotify] = useState(true);
   const dynamics = cards.filter(c => c.source === agent.source || c.source === agent.name);
   const followed = agent.name && followedIds.has(agent.name);
@@ -277,7 +284,7 @@ function PersonalCenter({ onOpen, stats, agents, onCreate }) {
         </div>
         <div className="mt-4 space-y-3.5">
           {agents.map(a => <button key={a.name} onClick={() => onOpen({ type: 'agent', agent: a })} className="flex w-full items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/60">
-            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${a.tone}`}>{a.initial}</span>
+            <AgentBadgeAvatar agent={a} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">{a.name}</span>
               <span className="mt-0.5 block text-xs text-muted-foreground">{a.followers ?? 0} 粉丝 · {a.dynamics ?? 0} 动态</span>
@@ -304,12 +311,12 @@ function PersonalCenter({ onOpen, stats, agents, onCreate }) {
 
 /* ─────────────────────────  主页面  ───────────────────────── */
 
-export default function FeedPage({ onNavigate }) {
+export default function FeedPage({ onNavigate, initialView }) {
   const [subPage, setSubPage] = useState(null);           // null | {type:'messages'|'agents'|'follows'|'agent'|'saved'|'moments', agent?}
   const [cards, setCards] = useState(initialCards);
   const [agents, setAgents] = useState(myAgents);
   const [showCreateAgent, setShowCreateAgent] = useState(false);
-  const [view, setView] = useState('discover');
+  const [view, setView] = useState(initialView || 'discover');
   const [range, setRange] = useState('all');
   const [filter, setFilter] = useState(null);
   const [catExpanded, setCatExpanded] = useState(false);
@@ -336,6 +343,13 @@ export default function FeedPage({ onNavigate }) {
     return () => clearTimeout(timer);
   }, []);
   useEffect(() => () => clearTimeout(toastTimer.current), []);
+  useEffect(() => {
+    if (initialView && initialView !== view) {
+      setView(initialView);
+      setFilter(null);
+      setSubPage(null);
+    }
+  }, [initialView]);
 
   const showToast = text => {
     setToast(text);
@@ -481,24 +495,24 @@ export default function FeedPage({ onNavigate }) {
 
       {/* 中列 */}
       <main className="min-w-0 max-w-[720px] flex-1">
-        <Card className="overflow-hidden">
-          {/* 顶栏：搜索 + tabs */}
-          <div className="sticky top-14 z-20 glass-strong border-x-0 border-t-0 px-6 py-3">
-            <div className="flex items-center justify-center gap-5">
-              <Button variant={searchOpen ? 'secondary' : 'ghost'} size="icon" className="rounded-full text-lg"
-                onClick={() => { setSearchOpen(v => { const next = !v; if (!next) setQuery(''); return next; }); setTimeout(() => searchRef.current?.focus(), 0); }}
-                title="搜索" aria-label="搜索"><i className="ri-search-line" /></Button>
-              {searchOpen
-                ? <Input ref={searchRef} value={query} onChange={e => { setQuery(e.target.value); if (e.target.value.trim()) setFilter(null); }} placeholder="搜索：信息流、主题、Agent..." className="w-[min(420px,60%)] rounded-full" />
-                : <Tabs value={view} onValueChange={switchView}>
-                    <TabsList>
-                      <TabsTrigger value="discover" badge={pendingNew.discover.length}>发现</TabsTrigger>
-                      <TabsTrigger value="following" badge={pendingNew.following.length}>关注</TabsTrigger>
-                    </TabsList>
-                  </Tabs>}
-            </div>
+        {/* 顶栏：搜索 + tabs（独立吸顶，不放进 overflow-hidden 卡片里） */}
+        <Card className="glass-strong sticky top-[64px] z-30 mb-4 px-6 py-3">
+          <div className="flex items-center justify-center gap-5">
+            <Button variant={searchOpen ? 'secondary' : 'ghost'} size="icon" className="rounded-full text-lg"
+              onClick={() => { setSearchOpen(v => { const next = !v; if (!next) setQuery(''); return next; }); setTimeout(() => searchRef.current?.focus(), 0); }}
+              title="搜索" aria-label="搜索"><i className="ri-search-line" /></Button>
+            {searchOpen
+              ? <Input ref={searchRef} value={query} onChange={e => { setQuery(e.target.value); if (e.target.value.trim()) setFilter(null); }} placeholder="搜索：信息流、主题、Agent..." className="w-[min(420px,60%)] rounded-full" />
+              : <Tabs value={view} onValueChange={switchView}>
+                  <TabsList>
+                    <TabsTrigger value="discover">发现</TabsTrigger>
+                    <TabsTrigger value="following">关注</TabsTrigger>
+                  </TabsList>
+                </Tabs>}
           </div>
+        </Card>
 
+        <Card className="overflow-hidden">
           {showNotice && <button onClick={refreshFeed} className="block w-full border-b border-orange-200/60 bg-accent/80 px-6 py-2.5 text-center text-[13px] font-semibold text-accent-foreground transition hover:bg-accent">
             {view === 'following' ? '关注' : '发现'}有 {activeNewCount} 条新内容，点击刷新
           </button>}
@@ -530,21 +544,12 @@ export default function FeedPage({ onNavigate }) {
             </div>
           </Card>
 
-          <Card className="flex items-center justify-between p-5">
+          <Card className="p-5">
             <h3 className="text-[15px] font-bold">时间范围</h3>
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant="secondary" className="w-[118px] justify-between bg-white/60 hover:bg-white">
-                  {rangeOptions.find(([key]) => key === range)?.[1]}
-                  <i className="ri-arrow-down-s-line text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[118px]">
-                {rangeOptions.map(([key, label]) => <DropdownMenuItem key={key} onClick={() => setRange(key)} className={range === key ? 'bg-accent text-accent-foreground' : ''}>
-                  <span className="flex-1">{label}</span>{range === key && <i className="ri-check-line" />}
-                </DropdownMenuItem>)}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="mt-4 grid grid-cols-4 gap-1.5">
+              {rangeOptions.map(([key, label]) => <button key={key} onClick={() => setRange(key)}
+                className={`h-9 rounded-xl text-[13px] transition ${range === key ? 'bg-accent font-medium text-accent-foreground ring-1 ring-orange-200/70' : 'bg-white/60 text-secondary-foreground hover:bg-white'}`}>{label}</button>)}
+            </div>
           </Card>
 
           <Card className="p-5">

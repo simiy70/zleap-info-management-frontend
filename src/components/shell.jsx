@@ -56,6 +56,15 @@ export function GlassHeader({ user = 'Zhang Wei' }) {
   </header>;
 }
 
+/* ── 卡片网格中的「新建」虚线卡片（信息源/助手/任务 统一样式） ── */
+export function NewItemCard({ label, onClick, className }) {
+  return <button onClick={onClick}
+    className={cn('group flex min-h-[168px] w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/90 bg-white/40 text-muted-foreground/50 backdrop-blur transition-all hover:border-orange-300 hover:bg-orange-50/30 hover:text-orange-400', className)}>
+    <i className="ri-add-line text-[42px] font-light leading-none" />
+    <span className="mt-3 text-sm font-medium transition-colors group-hover:text-orange-500">{label}</span>
+  </button>;
+}
+
 /* ── 底部 Dock（磨玻璃） ── */
 const dockItems = [
   ['desktop', '桌面', 'ri-home-5-line', 'bg-orange-100', 'text-orange-500'],
