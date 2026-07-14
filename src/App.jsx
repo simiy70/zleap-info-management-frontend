@@ -98,6 +98,8 @@ const infoItems = [
   { id: 102, name: "竞品官网抓取",                   kind: "网页",     source: "网页爬虫",    owner: "Simiy",    folderId: 2,    created: "5月15日 10:00", updated: "今天 10:22",    status: "解析中",   desc: "抽取网页正文、价格信息、功能模块和更新记录。", _formUrls: "https://www.notion.so/product" },
   { id: 103, name: "zleap 信息管理改版需求文档",      kind: "文档",     source: "文档上传",    owner: "Simiy",    folderId: 1,    created: "今天 14:30",    updated: "今天 14:32",    status: "同步完成", desc: "信息管理结构调整、文件夹与信息项平级。" },
   { id: 104, name: "GitHub Issues 同步",             kind: "代码讨论", source: "API 接入",    owner: "Simiy",    folderId: 0,    created: "5月8日 20:00",  updated: "昨天 20:01",    status: "同步失败", desc: "同步 Issue、PR 评论和状态。",                _apiUrl: "https://api.github.com/repos/simiy70/zleap-enterprise/issues" },
+  { id: 116, name: "客户数据库",                    kind: "数据库",   source: "API 接入",    owner: "Simiy",    folderId: 0,    created: "5月6日 09:20",  updated: "30 分钟前",     status: "同步失败", desc: "客户主数据同步失败，最近一次重试未完成。",          _apiUrl: "https://api.zleap.example.com/customers" },
+  { id: 117, name: "会议录音转写",                  kind: "音频",     source: "实时录音",    owner: "Simiy",    folderId: 0,    created: "5月9日 15:00",  updated: "1 小时前",      status: "未同步",   desc: "等待首次同步，尚未发现可解析的录音文件。" },
   { id: 105, name: "行业关键词监控",                 kind: "搜索流",   source: "搜索引擎",    owner: "运营团队", folderId: 3,    created: "5月1日 08:00",  updated: "今天 08:00",    status: "同步完成", desc: "按「AI 信息管理」关键词定期抓取百度/必应资讯。", _keyword: "AI 信息管理 产品动态" },
   { id: 106, name: "Notion AI 功能更新追踪",         kind: "网页",     source: "网页爬虫",    owner: "Simiy",    folderId: 1,    created: "5月5日 18:00",  updated: "昨天 18:45",    status: "同步完成", desc: "追踪 Notion 产品更新页面，自动提取新功能说明。", _formUrls: "https://www.notion.so/releases" },
   { id: 107, name: "OpenAI 官方博客订阅",            kind: "文章流",   source: "RSS 订阅",    owner: "Simiy",    folderId: 1,    created: "5月3日 07:00",  updated: "今天 07:15",    status: "同步完成", desc: "实时同步 OpenAI 官方 Blog 与研究报告。",     _formUrls: "https://openai.com/blog/rss.xml" },
@@ -10741,7 +10743,7 @@ function PublicSourcesPage({ onSelectItem, search: searchProp, setSearch: setSea
 /* ─── MAIN APP ─── */
 const TABS = ["全部", "我创建的", "与我共享"];
 
-function InfoSourcePage({ onNavigate, initialNavPage }) {
+function InfoSourcePage({ onNavigate, initialNavPage, initialDetailName }) {
   const [navPage, setNavPage]       = useState(initialNavPage || "mine"); // "search" | "mine" | "shared" | "report" | "public"
   const [page, setPage]             = useState("home");
   const [detailItem, setDetailItem]   = useState(null);
@@ -10774,6 +10776,17 @@ function InfoSourcePage({ onNavigate, initialNavPage }) {
       setPage("home");
     }
   }, [initialNavPage]);
+
+  useEffect(() => {
+    if (initialDetailName) {
+      const item = infoItems.find(source => source.name === initialDetailName);
+      if (item) {
+        setNavPage("mine");
+        setPage("home");
+        setDetailItem(item);
+      }
+    }
+  }, [initialDetailName]);
 
   // 汇报信息源 / 公共信息源：list 视图的搜索与视图切换（提升至 App 层以便与二级 tab 栏合并）
   const [reportTreeSearch, setReportTreeSearch] = useState("");
@@ -11527,6 +11540,7 @@ function App() {
   const [assistantChat, setAssistantChat] = useState("");
   const [feedInitialView, setFeedInitialView] = useState(null);
   const [sourcesInitialNav, setSourcesInitialNav] = useState(null);
+  const [sourcesInitialDetail, setSourcesInitialDetail] = useState(null);
   const navigate = (page, payload) => {
     if (["desktop", "sources", "assistant", "tasks", "feed"].includes(page)) {
       if (page === "assistant") {
@@ -11535,6 +11549,7 @@ function App() {
       }
       if (page === "feed") setFeedInitialView(payload?.view || null);
       if (page === "sources") setSourcesInitialNav(payload?.navPage || null);
+      if (page === "sources") setSourcesInitialDetail(payload?.detailName || null);
       setPrimaryPage(page);
     }
   };
@@ -11543,7 +11558,7 @@ function App() {
   if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} initialPrompt={assistantPrompt} initialChat={assistantChat} />;
   if (primaryPage === "tasks") return <TaskPage onNavigate={navigate} />;
   if (primaryPage === "feed") return <FeedPage onNavigate={navigate} initialView={feedInitialView} />;
-  return <InfoSourcePage onNavigate={navigate} initialNavPage={sourcesInitialNav} />;
+  return <InfoSourcePage onNavigate={navigate} initialNavPage={sourcesInitialNav} initialDetailName={sourcesInitialDetail} />;
 }
 
 export default App;

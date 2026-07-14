@@ -181,7 +181,7 @@ function AgentListCard({ onNavigate, agents, onCreateAgent }) {
   </CardShell>;
 }
 
-function SourceStatusCard({ onNavigate, onOpenSourceDetail }) {
+function SourceStatusCard({ onNavigate, onOpenSource }) {
   const mounted = useMounted();
   const dist = [
     { label: '未同步', value: 2, color: 'bg-slate-300' },
@@ -208,7 +208,7 @@ function SourceStatusCard({ onNavigate, onOpenSourceDetail }) {
         ? abnormalSources.map(s => <div key={s.name} className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-xl border border-rose-100 bg-rose-50/50 px-3 py-2.5 transition hover:bg-rose-50">
             <span className="flex min-w-0 items-center gap-2.5"><i className={`${s.status === '未同步' ? 'ri-time-line text-slate-400' : 'ri-error-warning-fill text-rose-500'}`} /><span className="min-w-0"><strong className="block truncate text-sm">{s.name}</strong><span className="block text-[11px] text-muted-foreground">{s.time}</span></span></span>
             <Badge variant={s.variant} className="px-2 text-[10px] font-normal">{s.status}</Badge>
-            <span className="flex items-center gap-1"><Button variant="ghost" size="sm" className="h-7 rounded-lg px-2 text-xs" onClick={() => onOpenSourceDetail(s)}>查看详情</Button><Button variant="outline" size="sm" className="h-7 rounded-lg px-2.5 text-xs" onClick={() => onNavigate('sources')}>重试</Button></span>
+            <span className="flex items-center gap-1"><Button variant="ghost" size="icon" className="h-7 w-7 rounded-full text-muted-foreground hover:bg-white hover:text-primary" onClick={() => onOpenSource(s.name)} title={`查看${s.name}详情`} aria-label={`查看${s.name}详情`}><i className="ri-arrow-right-s-line text-lg" /></Button><Button variant="outline" size="sm" className="h-7 rounded-lg px-2.5 text-xs" onClick={() => onNavigate('sources')}>重试</Button></span>
           </div>)
         : <div className="flex items-center gap-2 rounded-xl bg-emerald-50/70 px-3 py-3 text-sm text-emerald-700"><i className="ri-checkbox-circle-fill" />全部信息源运行正常</div>}
     </div>
@@ -254,17 +254,6 @@ function MomentDetailDialog({ moment, onClose }) {
           <div className="border-t border-border/50 p-4"><div className="flex items-center gap-3 rounded-full border border-border/70 px-4 py-2 text-sm text-muted-foreground"><span className="flex-1">评论</span><span className="flex items-center gap-3"><span><i className="ri-heart-line mr-1" />{moment.likes}</span><span><i className="ri-chat-3-line mr-1" />{moment.comments}</span><i className="ri-share-box-line" /></span></div></div>
         </div>
       </div>
-    </DialogContent>}
-  </Dialog>;
-}
-
-function SourceDetailDialog({ source, onClose }) {
-  return <Dialog open={Boolean(source)} onOpenChange={open => { if (!open) onClose(); }}>
-    {source && <DialogContent>
-      <DialogHeader><DialogTitle>{source.name}</DialogTitle><p className="text-xs text-muted-foreground">信息源详情 · 最近更新 {source.time}</p></DialogHeader>
-      <div className="rounded-2xl bg-rose-50/70 p-4"><div className="flex items-center gap-2"><Badge variant={source.variant}>{source.status}</Badge><span className="text-sm font-medium">当前需要处理</span></div><p className="mt-2 text-sm leading-6 text-muted-foreground">{source.desc}</p></div>
-      <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div className="rounded-xl bg-white/65 p-3"><span className="block text-xs text-muted-foreground">最近尝试</span><strong className="mt-1 block">{source.time}</strong></div><div className="rounded-xl bg-white/65 p-3"><span className="block text-xs text-muted-foreground">建议操作</span><strong className="mt-1 block">检查连接配置</strong></div></div>
-      <DialogFooter><Button variant="outline" onClick={onClose}>关闭</Button><Button onClick={onClose}>去处理</Button></DialogFooter>
     </DialogContent>}
   </Dialog>;
 }
@@ -380,10 +369,9 @@ export default function DesktopPage({ onNavigate }) {
   const [agents, setAgents] = useState(agentRows);
   const [showCreateAgent, setShowCreateAgent] = useState(false);
   const [momentDetail, setMomentDetail] = useState(null);
-  const [sourceDetail, setSourceDetail] = useState(null);
 
   // 卡片顺序：可拖拽交换
-  const [cardOrder, setCardOrder] = useState(['tasks', 'agents', 'sources', 'insights', 'moments']);
+  const [cardOrder, setCardOrder] = useState(['moments', 'insights', 'tasks', 'agents', 'sources']);
   const dragIndex = useRef(null);
   const [overIndex, setOverIndex] = useState(null);
   const dropCard = index => {
@@ -427,7 +415,7 @@ export default function DesktopPage({ onNavigate }) {
               onDragEnd={() => { dragIndex.current = null; setOverIndex(null); }}
               className={`fade-in-up rounded-2xl transition ${id === 'moments' ? 'lg:col-span-2' : ''} ${overIndex === index ? 'scale-[0.99] ring-2 ring-primary/50' : ''}`}
               style={{ animationDelay: `${0.08 * (index + 1)}s` }}>
-              <CardComp onNavigate={onNavigate} {...(id === 'agents' ? { agents, onCreateAgent: () => setShowCreateAgent(true) } : {})} {...(id === 'moments' ? { onOpenMoment: setMomentDetail } : {})} {...(id === 'sources' ? { onOpenSourceDetail: setSourceDetail } : {})} />
+              <CardComp onNavigate={onNavigate} {...(id === 'agents' ? { agents, onCreateAgent: () => setShowCreateAgent(true) } : {})} {...(id === 'moments' ? { onOpenMoment: setMomentDetail } : {})} {...(id === 'sources' ? { onOpenSource: name => onNavigate('sources', { detailName: name }) } : {})} />
             </div>;
           })}
         </div>
@@ -437,6 +425,5 @@ export default function DesktopPage({ onNavigate }) {
     <GlassDock active="desktop" onNavigate={onNavigate} />
     <CreateAgentDialog open={showCreateAgent} onOpenChange={setShowCreateAgent} onCreate={agent => setAgents(prev => [agent, ...prev])} />
     <MomentDetailDialog moment={momentDetail} onClose={() => setMomentDetail(null)} />
-    <SourceDetailDialog source={sourceDetail} onClose={() => setSourceDetail(null)} />
   </PageShell>;
 }
