@@ -127,7 +127,7 @@ function TaskCard({ onNavigate }) {
 }
 
 function InsightCard({ onNavigate }) {
-  return <CardShell icon="ri-lightbulb-line" title="今日洞察" action="查看全部事件" onAction={() => onNavigate('feed')}>
+  return <CardShell icon="ri-lightbulb-line" title="今日洞察" action="查看全部事件" onAction={() => onNavigate('sources', { navPage: 'search' })}>
     <div className="scrollbar relative max-h-[360px] overflow-y-auto px-5 pb-5 before:absolute before:bottom-8 before:left-[72px] before:top-2 before:w-px before:bg-border/60">
       {insightEvents.map(item => <div key={item.title} className="relative flex gap-4 py-2.5">
         <div className="w-10 shrink-0 pt-0.5 text-right text-xs font-medium text-muted-foreground">{item.time}</div>
@@ -157,7 +157,7 @@ function AgentListCard({ onNavigate, agents, onCreateAgent }) {
         className="group/row grid w-full cursor-pointer grid-cols-[124px_1fr_auto_auto] items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-white/60">
         <span className="flex min-w-0 items-center gap-2.5">
           <span className="relative shrink-0">
-            <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-white ${a.tone}`}>{a.icon}</span>
+            <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white ${a.tone}`}>{a.icon}</span>
             {a.isPublic === false && <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-white ring-2 ring-white" title="私密 Agent"><i className="ri-lock-fill text-[8px]" /></span>}
           </span>
           <strong className="min-w-0 truncate text-sm">{a.name}</strong>
@@ -222,7 +222,7 @@ function MomentsCard({ onNavigate, onOpenMoment }) {
         <img src={m.img} alt="" className="aspect-[5/3] w-full bg-muted object-cover" />
         <span className="flex min-w-0 flex-1 flex-col p-3">
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded text-[8px] font-bold text-white ${m.tone}`}>{m.icon}</span>
+            <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[8px] font-bold text-white ${m.tone}`}>{m.icon}</span>
             <span className="truncate">{m.agent}</span>
             <span className="ml-auto shrink-0">{m.time}</span>
           </span>
@@ -383,7 +383,7 @@ export default function DesktopPage({ onNavigate }) {
   const [sourceDetail, setSourceDetail] = useState(null);
 
   // 卡片顺序：可拖拽交换
-  const [cardOrder, setCardOrder] = useState(['tasks', 'insights', 'agents', 'sources', 'moments']);
+  const [cardOrder, setCardOrder] = useState(['tasks', 'agents', 'sources', 'insights', 'moments']);
   const dragIndex = useRef(null);
   const [overIndex, setOverIndex] = useState(null);
   const dropCard = index => {

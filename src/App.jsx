@@ -1461,7 +1461,7 @@ function StatusIcon({ status }) {
 
 function FolderAvatar() {
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-500">
       <Icon.Folder />
     </div>
   );
@@ -1470,7 +1470,7 @@ function FolderAvatar() {
 function SourceAvatar({ source }) {
   const info = sourceInfo[source] || { Icon: Icon.File };
   return (
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-500">
       <info.Icon />
     </div>
   );
@@ -10369,7 +10369,7 @@ function PublicSourceDetail({ item, onBack }) {
           <Icon.Back /> 返回
         </button>
         <div className="h-8 w-px bg-neutral-100" />
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[13px] font-bold leading-none shadow-sm"
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[13px] font-bold leading-none shadow-sm"
           style={{ background: item.avatar.bg, color: item.avatar.fg }}>
           {item.avatar.s}
         </div>
@@ -10673,7 +10673,7 @@ function PublicSourcesPage({ onSelectItem, search: searchProp, setSearch: setSea
                 style={{ minHeight: "168px" }}>
                 {/* 头像 + 名称 */}
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold leading-none shadow-sm transition-transform group-hover:scale-105"
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold leading-none shadow-sm transition-transform group-hover:scale-105"
                     style={{ background: src.avatar.bg, color: src.avatar.fg }}>
                     {src.avatar.s}
                   </div>
@@ -10715,7 +10715,7 @@ function PublicSourcesPage({ onSelectItem, search: searchProp, setSearch: setSea
                   style={{ gridTemplateColumns: "minmax(0,2.2fr) minmax(0,3fr) minmax(0,2fr) 110px" }}>
                   {/* Name */}
                   <div className="flex min-w-0 items-center gap-3 pr-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[11px] font-bold leading-none shadow-sm"
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold leading-none shadow-sm"
                       style={{ background: src.avatar.bg, color: src.avatar.fg }}>{src.avatar.s}</div>
                     <div className="truncate text-sm font-semibold text-neutral-900 transition-colors group-hover:text-orange-600">{src.name}</div>
                   </div>
@@ -10741,8 +10741,8 @@ function PublicSourcesPage({ onSelectItem, search: searchProp, setSearch: setSea
 /* ─── MAIN APP ─── */
 const TABS = ["全部", "我创建的", "与我共享"];
 
-function InfoSourcePage({ onNavigate }) {
-  const [navPage, setNavPage]       = useState("mine"); // "search" | "mine" | "shared" | "report" | "public"
+function InfoSourcePage({ onNavigate, initialNavPage }) {
+  const [navPage, setNavPage]       = useState(initialNavPage || "mine"); // "search" | "mine" | "shared" | "report" | "public"
   const [page, setPage]             = useState("home");
   const [detailItem, setDetailItem]   = useState(null);
   const [publicDetail, setPublicDetail] = useState(null);
@@ -10767,6 +10767,13 @@ function InfoSourcePage({ onNavigate }) {
   const [deleteItem, setDeleteItem]       = useState(null);
   const [editConfigItem, setEditConfigItem] = useState(null);
   const [syncingItems, setSyncingItems]     = useState(new Set()); // 立即同步中的 item ids
+
+  useEffect(() => {
+    if (initialNavPage) {
+      setNavPage(initialNavPage);
+      setPage("home");
+    }
+  }, [initialNavPage]);
 
   // 汇报信息源 / 公共信息源：list 视图的搜索与视图切换（提升至 App 层以便与二级 tab 栏合并）
   const [reportTreeSearch, setReportTreeSearch] = useState("");
@@ -11519,6 +11526,7 @@ function App() {
   const [assistantPrompt, setAssistantPrompt] = useState("");
   const [assistantChat, setAssistantChat] = useState("");
   const [feedInitialView, setFeedInitialView] = useState(null);
+  const [sourcesInitialNav, setSourcesInitialNav] = useState(null);
   const navigate = (page, payload) => {
     if (["desktop", "sources", "assistant", "tasks", "feed"].includes(page)) {
       if (page === "assistant") {
@@ -11526,6 +11534,7 @@ function App() {
         setAssistantChat(payload?.chat || "");
       }
       if (page === "feed") setFeedInitialView(payload?.view || null);
+      if (page === "sources") setSourcesInitialNav(payload?.navPage || null);
       setPrimaryPage(page);
     }
   };
@@ -11534,7 +11543,7 @@ function App() {
   if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} initialPrompt={assistantPrompt} initialChat={assistantChat} />;
   if (primaryPage === "tasks") return <TaskPage onNavigate={navigate} />;
   if (primaryPage === "feed") return <FeedPage onNavigate={navigate} initialView={feedInitialView} />;
-  return <InfoSourcePage onNavigate={navigate} />;
+  return <InfoSourcePage onNavigate={navigate} initialNavPage={sourcesInitialNav} />;
 }
 
 export default App;

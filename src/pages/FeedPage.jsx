@@ -47,7 +47,7 @@ const myAgents = [
 ];
 
 /* Agent 首字头像 + 私密锁角标（isPublic === false 时显示） */
-function AgentBadgeAvatar({ agent, size = 'h-9 w-9 rounded-lg text-sm' }) {
+function AgentBadgeAvatar({ agent, size = 'h-9 w-9 rounded-full text-sm' }) {
   return <span className="relative shrink-0">
     <span className={`flex items-center justify-center font-bold text-white ${size} ${agent.tone}`}>{agent.initial}</span>
     {agent.isPublic === false && <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-white ring-2 ring-white" title="私密 Agent"><i className="ri-lock-fill text-[8px]" /></span>}
@@ -141,7 +141,7 @@ function AgentGridPage({ title, items, onBack, onOpenAgent, extra }) {
     <BackBar title={title} onBack={onBack} />
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {items.map(a => <Card key={a.name} className="cursor-pointer p-5 text-center transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(15,23,42,0.1)]" onClick={() => onOpenAgent(a)}>
-        <span className="mx-auto inline-block"><AgentBadgeAvatar agent={a} size="h-14 w-14 rounded-2xl text-lg" /></span>
+        <span className="mx-auto inline-block"><AgentBadgeAvatar agent={a} size="h-14 w-14 rounded-full text-lg" /></span>
         <div className="mt-3 flex items-center justify-center gap-1.5 font-semibold">{a.name}{a.running && <span className="breathe h-2 w-2 rounded-full bg-emerald-500" />}</div>
         <div className="mt-1 text-xs text-muted-foreground">{a.meta}</div>
         <p className="mt-3 text-left text-[13px] leading-6 text-muted-foreground">{a.desc}</p>
@@ -298,7 +298,7 @@ function PersonalCenter({ onOpen, stats, agents, onCreate }) {
         <h3 className="text-[15px] font-bold">我的关注</h3>
         <div className="mt-4 space-y-3.5">
           {myFollows.map(a => <button key={a.name} onClick={() => onOpen({ type: 'agent', agent: a })} className="flex w-full items-center gap-3 rounded-xl p-1 text-left transition hover:bg-white/60">
-            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${a.tone}`}>{a.initial}</span>
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${a.tone}`}>{a.initial}</span>
             <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{a.name}</span><span className="mt-0.5 block text-xs text-muted-foreground">{a.meta}</span></span>
             {a.dot && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
           </button>)}
