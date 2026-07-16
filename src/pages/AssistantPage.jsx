@@ -462,9 +462,9 @@ export default function AssistantPage({ onNavigate, initialPrompt = "", initialC
   const filteredAssistants = useMemo(() => {
     const all = [...customAssistants, ...assistants];
     let base = all;
-    if (subTab === "mine")      base = base.filter(a => a.followed);
+    if (subTab === "mine")      base = base.filter(a => a.followed && a.creator !== "这里最…");
     if (subTab === "created")   base = base.filter(a => a.creator === "这里最…");
-    if (subTab === "recommend") base = all;
+    if (subTab === "recommend") base = all.filter(a => a.creator !== "这里最…");
     if (followFilter !== "all") base = base.filter(a => a.followed === (followFilter === "followed"));
     const kw = search.trim().toLowerCase();
     if (!kw) return base;
