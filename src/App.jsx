@@ -2378,7 +2378,7 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
   React.useEffect(() => setPage(1), [itemKey, timeMode]);
   React.useEffect(() => setPage(current => Math.min(current, totalPages)), [totalPages]);
   return (
-    <div>
+    <div className="flex min-h-full flex-col">
       <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
       {onCreateNew && (
         <div onClick={onCreateNew}
@@ -2532,7 +2532,7 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
         );
       })}
       </div>
-      <CardPagination page={page} totalPages={totalPages} totalItems={sortedItems.length} onPageChange={setPage} className="mt-8" />
+      <CardPagination page={page} totalPages={totalPages} totalItems={sortedItems.length} onPageChange={setPage} className="mt-auto pt-8" />
     </div>
   );
 }

@@ -181,12 +181,12 @@ function ManagementView({ items, view, onCreateNew }) {
     );
   }
   return (
-    <div className="p-6">
+    <div className="flex flex-1 flex-col p-6">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {onCreateNew && <NewItemCard label="创建助手" onClick={onCreateNew} className="min-h-full" />}
         {pagedItems.map(a => <AssistantCard key={a.id} item={a} />)}
       </div>
-      <CardPagination page={page} totalPages={totalPages} totalItems={items.length} onPageChange={setPage} className="mt-6" />
+      <CardPagination page={page} totalPages={totalPages} totalItems={items.length} onPageChange={setPage} className="mt-auto pt-8" />
     </div>
   );
 }
@@ -555,7 +555,7 @@ export default function AssistantPage({ onNavigate, initialPrompt = "", initialC
           )}
 
           {/* 内容区 */}
-          <div className="flex-1 overflow-y-auto pb-32">
+          <div className="flex flex-1 flex-col overflow-y-auto pb-32">
             {viewMode === "management"
               ? <ManagementView items={filteredAssistants} view="card" onCreateNew={() => setShowCreate(true)} />
               : <ChatView initialDraft={initialPrompt} initialChatName={initialChat} />}

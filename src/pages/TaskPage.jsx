@@ -84,7 +84,7 @@ export default function TaskPage({ onNavigate }) {
 
   return <PageShell>
     <GlassHeader />
-    <main className="w-full px-8 pb-32 pt-5">
+    <main className="flex min-h-[calc(100vh-56px)] w-full flex-col px-8 pb-32 pt-5">
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-[362px] max-w-full">
           <i className="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-lg text-muted-foreground" />
@@ -111,12 +111,12 @@ export default function TaskPage({ onNavigate }) {
       </div>
 
       {filtered.length
-        ? <section className="mt-5">
+        ? <section className="mt-5 flex flex-1 flex-col">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <NewItemCard label="新建任务" onClick={() => setShowCreate(true)} className="min-h-[168px]" />
               {pagedTasks.map(task => <TaskCard key={task.id} task={task} onToggle={id => setTasks(v => v.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t))} onDelete={id => setTasks(v => v.filter(t => t.id !== id))} onDetails={setDetail} />)}
             </div>
-            <CardPagination page={page} totalPages={totalPages} totalItems={filtered.length} onPageChange={setPage} className="mt-6" />
+            <CardPagination page={page} totalPages={totalPages} totalItems={filtered.length} onPageChange={setPage} className="mt-auto pt-8" />
           </section>
         : <section className="mt-24 flex flex-col items-center text-muted-foreground"><i className="ri-inbox-2-line text-5xl" /><div className="mt-3 text-sm">没有找到符合条件的任务</div><Button variant="link" size="sm" className="mt-2" onClick={clear}>重置筛选</Button></section>}
     </main>
