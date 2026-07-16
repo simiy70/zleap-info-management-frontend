@@ -5,6 +5,7 @@ import TaskPage from './pages/TaskPage.jsx';
 import { PageShell, GlassHeader, GlassDock } from './components/shell';
 import { Button as UIButton } from './components/ui/button';
 import FeedPage from './pages/FeedPage.jsx';
+import MemberPage from './pages/MemberPage.jsx';
 import folderOrange from './assets/folders/folder-orange.png';
 import folderOrangeLocked from './assets/folders/folder-orange-locked.png';
 import folderBlue from './assets/folders/folder-blue.png';
@@ -11563,7 +11564,7 @@ function App() {
   const [sourcesInitialNav, setSourcesInitialNav] = useState(null);
   const [sourcesInitialDetail, setSourcesInitialDetail] = useState(null);
   const navigate = (page, payload) => {
-    if (["desktop", "sources", "assistant", "tasks", "feed"].includes(page)) {
+    if (["desktop", "sources", "assistant", "tasks", "feed", "members"].includes(page)) {
       if (page === "assistant") {
         setAssistantPrompt(payload?.prompt || "");
         setAssistantChat(payload?.chat || "");
@@ -11579,6 +11580,7 @@ function App() {
   if (primaryPage === "assistant") return <AssistantPage onNavigate={navigate} initialPrompt={assistantPrompt} initialChat={assistantChat} />;
   if (primaryPage === "tasks") return <TaskPage onNavigate={navigate} />;
   if (primaryPage === "feed") return <FeedPage onNavigate={navigate} initialView={feedInitialView} />;
+  if (primaryPage === "members") return <MemberPage onNavigate={navigate} />;
   return <InfoSourcePage onNavigate={navigate} initialNavPage={sourcesInitialNav} initialDetailName={sourcesInitialDetail} />;
 }
 

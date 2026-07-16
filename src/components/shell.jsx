@@ -65,23 +65,31 @@ export function NewItemCard({ label, onClick, className }) {
   </button>;
 }
 
-/* ── 底部 Dock（磨玻璃） ── */
-const dockItems = [
-  ['desktop', '桌面', 'ri-home-5-line', 'bg-orange-100', 'text-orange-500'],
-  ['sources', '信息源', 'ri-database-2-line', 'bg-violet-100', 'text-violet-600'],
-  ['assistant', '助手', 'ri-chat-smile-2-line', 'bg-emerald-100', 'text-emerald-600'],
-  ['tasks', '任务', 'ri-task-line', 'bg-blue-100', 'text-blue-600'],
-  ['feed', '动态', 'ri-rss-line', 'bg-rose-100', 'text-rose-500'],
+/* ── 底部 Dock（磨玻璃）：按「管理 ｜ 消费」分组 ── */
+const dockGroups = [
+  [ /* 管理 */
+    ['desktop', '桌面', 'ri-home-5-line', 'bg-orange-100', 'text-orange-500'],
+    ['sources', '信息源', 'ri-database-2-line', 'bg-violet-100', 'text-violet-600'],
+    ['assistant', '助手', 'ri-chat-smile-2-line', 'bg-emerald-100', 'text-emerald-600'],
+    ['tasks', '任务', 'ri-task-line', 'bg-blue-100', 'text-blue-600'],
+    ['members', '成员管理', 'ri-team-line', 'bg-cyan-100', 'text-cyan-600'],
+  ],
+  [ /* 消费 */
+    ['feed', '动态', 'ri-rss-line', 'bg-rose-100', 'text-rose-500'],
+  ],
 ];
 
 export function GlassDock({ active, onNavigate }) {
   return <div className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center">
     <nav className="glass pointer-events-auto flex items-end gap-1 rounded-3xl px-3 py-2.5 shadow-xl shadow-slate-900/10">
-      {dockItems.map(([id, label, icon, bg, color]) => <button key={id} onClick={() => onNavigate?.(id)} title={label}
-        className={cn('group flex w-16 flex-col items-center gap-1 rounded-2xl px-1.5 py-1.5 transition', id === active ? 'bg-white/80' : 'hover:bg-white/50')}>
-        <span className={cn('flex h-11 w-11 items-center justify-center rounded-[14px] text-[23px] transition-transform group-hover:scale-[1.06] group-active:scale-95', bg, color)}><i className={icon} /></span>
-        <span className={cn('text-[11px] leading-none', id === active ? 'font-medium text-foreground' : 'text-muted-foreground')}>{label}</span>
-      </button>)}
+      {dockGroups.map((items, gi) => <React.Fragment key={gi}>
+        {gi > 0 && <div className="mx-1.5 h-12 w-px self-center rounded-full bg-slate-900/10" aria-hidden="true" />}
+        {items.map(([id, label, icon, bg, color]) => <button key={id} onClick={() => onNavigate?.(id)} title={label}
+          className={cn('group flex w-16 flex-col items-center gap-1 rounded-2xl px-1.5 py-1.5 transition', id === active ? 'bg-white/80' : 'hover:bg-white/50')}>
+          <span className={cn('flex h-11 w-11 items-center justify-center rounded-[14px] text-[23px] transition-transform group-hover:scale-[1.06] group-active:scale-95', bg, color)}><i className={icon} /></span>
+          <span className={cn('text-[11px] leading-none', id === active ? 'font-medium text-foreground' : 'text-muted-foreground')}>{label}</span>
+        </button>)}
+      </React.Fragment>)}
     </nav>
   </div>;
 }
