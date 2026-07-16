@@ -1,5 +1,30 @@
 # Design QA
 
+## Current QA — Desktop Agent List
+
+- Source visual truth: Comment 2 additional visual attachment in the current conversation.
+- Implementation screenshot: `/Users/mac/Documents/Zleap-web/.codex-qa/desktop-agent-list-focus.png`
+- Full-page evidence: `/Users/mac/Documents/Zleap-web/.codex-qa/desktop-agent-list-final.png`
+- Viewport: 1051 × 773
+- State: 桌面；右侧 Agent 对话面板展开；页面滚动至“我的 Agent”。
+- Comparison method: the conversation reference and focused implementation screenshot were reviewed together in the same QA pass.
+
+### Current Findings
+
+- No remaining P0/P1/P2 findings.
+- The desktop greeting is absent and the first content module now starts directly below the global header.
+- All four Agent rows follow the reference hierarchy: 40px avatar, name plus one-line description, separated “动态数” and “今日新增” metrics, chat icon, and trailing chevron.
+- Row separators, rounded container, spacing, typography, and green increase values visually match the supplied compact list treatment while reusing the product's existing design tokens.
+- The private Agent lock badge and the existing “创建新 Agent” entry remain intact.
+- Browser evidence confirms zero greeting matches, four “今日新增” labels, and zero console errors.
+- Production build passed; only the existing large-chunk advisory remains.
+
+### Current Primary Interactions Checked
+
+- Reloading the local desktop route with the right-side Agent panel open.
+- Scrolling to the “我的 Agent” module.
+- Reading all four rows and their accessible chat labels at the 1051 × 773 desktop viewport.
+
 - Source visual truth: `/Users/mac/Library/Application Support/LarkShell/sdk_storage/32c67f76a4997fb146a9089272e22f80/resources/images/img_v3_0213j_ba193204-74e9-4862-b9ff-3f3d961b16fg.jpg`
 - Implementation screenshot: `/Users/mac/Documents/Zleap-web/.codex-qa/info-cards-final.png`
 - Assistant screenshot: `/Users/mac/Documents/Zleap-web/.codex-qa/assistant-cards-final.png`

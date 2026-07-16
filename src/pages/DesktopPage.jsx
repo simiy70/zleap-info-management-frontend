@@ -67,10 +67,10 @@ const insightEvents = [
 ];
 
 const agentRows = [
-  { name: 'Claude Code', icon: 'CC', tone: 'bg-emerald-500', posts: 128, today: 12, fans: '12.6万', isPublic: true },
-  { name: '调研分析助手', icon: '研', tone: 'bg-violet-500', posts: 86, today: 10, fans: '8.4万', isPublic: true },
-  { name: '内容生成助手', icon: '文', tone: 'bg-blue-500', posts: 152, today: 18, fans: '15.3万', isPublic: true },
-  { name: '客服助手', icon: '客', tone: 'bg-orange-400', posts: 94, today: 14, fans: '6.7万', isPublic: false },
+  { name: 'Claude Code', icon: 'CC', tone: 'bg-emerald-500', desc: '代码生成与优化', posts: 128, today: 12, fans: '12.6万', isPublic: true },
+  { name: '调研分析助手', icon: '研', tone: 'bg-violet-500', desc: '数据调研与分析洞察', posts: 86, today: 10, fans: '8.4万', isPublic: true },
+  { name: '内容生成助手', icon: '文', tone: 'bg-blue-500', desc: '内容创作与文案生成', posts: 152, today: 18, fans: '15.3万', isPublic: true },
+  { name: '客服助手', icon: '客', tone: 'bg-orange-400', desc: '智能客服与问题解答', posts: 94, today: 14, fans: '6.7万', isPublic: false },
 ];
 
 // 关注的 Agent 动态（桌面「Agent 动态」卡片；图片 5:3）
@@ -90,14 +90,6 @@ const abnormalSources = [
 const quickPrompts = ['分析小米YU7销量增长原因', '列出当前Agent运行任务', '说明信息源同步失败处理方法'];
 const currentUser = 'Zhang Wei';
 const desktopAssistantName = `${currentUser}的Agent`;
-
-function greeting() {
-  const hour = new Date().getHours();
-  if (hour < 6) return '夜深了';
-  if (hour < 12) return '早上好';
-  if (hour < 18) return '下午好';
-  return '晚上好';
-}
 
 /* 挂载后置 true，用于让图表宽度/弧长从 0 过渡到目标值 */
 function useMounted(delay = 120) {
@@ -238,24 +230,32 @@ function AgentListCard({ onNavigate, agents, onCreateAgent }) {
   const ranked = [...agents].sort((a, b) => b.posts - a.posts);
   const openChat = name => onNavigate('assistant', { chat: name });
   return <CardShell icon="ri-robot-2-line" title="我的 Agent" action="管理 Agent" onAction={() => onNavigate('assistant')}>
-    <div className="flex justify-end px-5 pb-3 text-xs text-muted-foreground">
-      <span>动态数 · 今日新增</span>
-    </div>
-    <div className="space-y-0.5 px-5 pb-3">
+    <div className="mx-5 mb-3 overflow-hidden rounded-xl border border-border/60 bg-white/55">
       {ranked.map(a => <div key={a.name} onClick={() => openChat(a.name)} role="button" tabIndex={0}
         onKeyDown={e => { if (e.key === 'Enter') openChat(a.name); }}
-        className="group/row grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-white/60">
-        <span className="flex min-w-0 items-center gap-2.5">
+        className="group/row grid min-h-[68px] w-full cursor-pointer grid-cols-[minmax(0,1fr)_58px_66px_28px_14px] items-center gap-2 border-b border-border/50 px-3 text-left transition last:border-b-0 hover:bg-white/75">
+        <span className="flex min-w-0 items-center gap-3">
           <span className="relative shrink-0">
-            <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white ${a.tone}`}>{a.icon}</span>
+            <span className={`flex h-10 w-10 items-center justify-center rounded-full text-[13px] font-bold text-white ${a.tone}`}>{a.icon}</span>
             {a.isPublic === false && <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-slate-700 text-white ring-2 ring-white" title="私密 Agent"><i className="ri-lock-fill text-[8px]" /></span>}
           </span>
-          <strong className="min-w-0 truncate text-sm">{a.name}</strong>
+          <span className="min-w-0">
+            <strong className="block truncate text-[14px] font-semibold text-foreground">{a.name}</strong>
+            <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{a.desc || '暂无简介'}</span>
+          </span>
         </span>
-        <span className="w-11 text-right"><strong className="text-sm">{a.posts}</strong><span className="block text-[11px] text-emerald-600">+{a.today}</span></span>
+        <span className="text-left">
+          <strong className="block text-[15px] leading-5 text-foreground">{a.posts}</strong>
+          <span className="block text-[10px] leading-4 text-muted-foreground">动态数</span>
+        </span>
+        <span className="border-l border-border/60 pl-3 text-left">
+          <strong className="block text-[15px] leading-5 text-emerald-600">+{a.today}</strong>
+          <span className="block whitespace-nowrap text-[10px] leading-4 text-muted-foreground">今日新增</span>
+        </span>
         <span className="flex h-8 w-8 items-center justify-center rounded-lg text-base text-muted-foreground/40 transition group-hover/row:bg-accent group-hover/row:text-primary" title={`和 ${a.name} 对话`}>
-          <i className="ri-chat-3-line" />
+          <i className="ri-chat-3-line text-[17px]" />
         </span>
+        <i className="ri-arrow-right-s-line text-lg text-muted-foreground/40 transition group-hover/row:translate-x-0.5 group-hover/row:text-muted-foreground" />
       </div>)}
     </div>
     <div className="px-5 pb-4">
@@ -500,8 +500,7 @@ export default function DesktopPage({ onNavigate }) {
     <GlassHeader user={currentUser} />
     <main className={`px-8 pb-32 pt-8 transition-all duration-300 ${chatOpen ? 'xl:mr-[384px]' : ''}`}>
       <div className="mx-auto max-w-[1280px]">
-        <h1 className="fade-in-up text-center text-2xl font-bold tracking-tight">{greeting()}，今天想做点什么？</h1>
-        <div className="mt-8 grid auto-rows-fr grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="grid auto-rows-fr grid-cols-1 gap-5 lg:grid-cols-2">
           {cardOrder.map((id, index) => {
             const CardComp = cardComponents[id];
             return <div key={id} draggable
