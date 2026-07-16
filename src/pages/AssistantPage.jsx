@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { PageShell, GlassHeader, GlassDock, NewItemCard } from '../components/shell';
+import { PageShell, GlassHeader, GlassDock, NewItemCard, CardPagination } from '../components/shell';
 
 /* ─── SVG ICONS ─── */
 const Icon = {
@@ -164,6 +164,15 @@ function AssistantRow({ item, onContext }) {
 
 /* ─── 管理视图 ─── */
 function ManagementView({ items, view, onCreateNew }) {
+  const pageSize = 10;
+  const [page, setPage] = useState(1);
+  const itemKey = items.map(item => item.id).join('|');
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const pagedItems = items.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => setPage(1), [itemKey]);
+  useEffect(() => setPage(current => Math.min(current, totalPages)), [totalPages]);
+
   if (view === "list") {
     return (
       <div className="space-y-2 p-6">
@@ -172,9 +181,12 @@ function ManagementView({ items, view, onCreateNew }) {
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-3 p-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-      {onCreateNew && <NewItemCard label="创建助手" onClick={onCreateNew} className="min-h-full" />}
-      {items.map(a => <AssistantCard key={a.id} item={a} />)}
+    <div className="p-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {onCreateNew && <NewItemCard label="创建助手" onClick={onCreateNew} className="min-h-full" />}
+        {pagedItems.map(a => <AssistantCard key={a.id} item={a} />)}
+      </div>
+      <CardPagination page={page} totalPages={totalPages} totalItems={items.length} onPageChange={setPage} className="mt-6" />
     </div>
   );
 }

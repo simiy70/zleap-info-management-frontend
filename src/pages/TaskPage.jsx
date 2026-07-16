@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { PageShell, GlassHeader, GlassDock, NewItemCard } from '../components/shell';
+import { PageShell, GlassHeader, GlassDock, NewItemCard, CardPagination } from '../components/shell';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -70,10 +70,17 @@ export default function TaskPage({ onNavigate }) {
   const [status, setStatus] = useState("all");
   const [showCreate, setShowCreate] = useState(false);
   const [detail, setDetail] = useState(null);
+  const [page, setPage] = useState(1);
   const filtered = useMemo(() => tasks.filter(t => (status === "all" || (status === "running") === t.enabled) && (t.name + t.owner).toLowerCase().includes(search.trim().toLowerCase())), [tasks, search, status]);
+  const pageSize = 8;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pagedTasks = filtered.slice((page - 1) * pageSize, page * pageSize);
   const clear = () => { setSearch(""); setStatus("all"); };
   const create = form => setTasks(v => [{ id: Date.now(), ...form, time: "暂无", avatar: "https://i.pravatar.cc/64?img=47" }, ...v]);
   const statusLabels = { all: "全部状态", running: "正常执行", paused: "任务暂停" };
+
+  React.useEffect(() => setPage(1), [search, status]);
+  React.useEffect(() => setPage(current => Math.min(current, totalPages)), [totalPages]);
 
   return <PageShell>
     <GlassHeader />
@@ -104,9 +111,12 @@ export default function TaskPage({ onNavigate }) {
       </div>
 
       {filtered.length
-        ? <section className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <NewItemCard label="新建任务" onClick={() => setShowCreate(true)} className="min-h-[168px]" />
-            {filtered.map(task => <TaskCard key={task.id} task={task} onToggle={id => setTasks(v => v.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t))} onDelete={id => setTasks(v => v.filter(t => t.id !== id))} onDetails={setDetail} />)}
+        ? <section className="mt-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <NewItemCard label="新建任务" onClick={() => setShowCreate(true)} className="min-h-[168px]" />
+              {pagedTasks.map(task => <TaskCard key={task.id} task={task} onToggle={id => setTasks(v => v.map(t => t.id === id ? { ...t, enabled: !t.enabled } : t))} onDelete={id => setTasks(v => v.filter(t => t.id !== id))} onDetails={setDetail} />)}
+            </div>
+            <CardPagination page={page} totalPages={totalPages} totalItems={filtered.length} onPageChange={setPage} className="mt-6" />
           </section>
         : <section className="mt-24 flex flex-col items-center text-muted-foreground"><i className="ri-inbox-2-line text-5xl" /><div className="mt-3 text-sm">没有找到符合条件的任务</div><Button variant="link" size="sm" className="mt-2" onClick={clear}>重置筛选</Button></section>}
     </main>

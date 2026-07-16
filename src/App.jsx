@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import AssistantPage from './pages/AssistantPage.jsx';
 import DesktopPage from './pages/DesktopPage.jsx';
 import TaskPage from './pages/TaskPage.jsx';
-import { PageShell, GlassHeader, GlassDock } from './components/shell';
+import { PageShell, GlassHeader, GlassDock, CardPagination } from './components/shell';
 import { Button as UIButton } from './components/ui/button';
 import FeedPage from './pages/FeedPage.jsx';
 import MemberPage from './pages/MemberPage.jsx';
@@ -2370,6 +2370,13 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
     return 0;
   };
   const sortedItems = [...items].sort((a, b) => toSortKey(b[timeMode]) - toSortKey(a[timeMode]));
+  const pageSize = 12;
+  const [page, setPage] = React.useState(1);
+  const itemKey = sortedItems.map(item => item.id).join('|');
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / pageSize));
+  const pagedItems = sortedItems.slice((page - 1) * pageSize, page * pageSize);
+  React.useEffect(() => setPage(1), [itemKey, timeMode]);
+  React.useEffect(() => setPage(current => Math.min(current, totalPages)), [totalPages]);
   return (
     <div>
       <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
@@ -2380,7 +2387,7 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
           <div className="mt-3 text-sm font-medium transition-colors group-hover:text-orange-500">新建信息源</div>
         </div>
       )}
-      {sortedItems.map(item => {
+      {pagedItems.map(item => {
         const isFolder = item.kind === "文件夹";
         const srcInfo = !isFolder && (sourceInfo[item.source] || { label: item.source });
         const summary = isFolder ? getFolderSummary(item) : null;
@@ -2525,6 +2532,7 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
         );
       })}
       </div>
+      <CardPagination page={page} totalPages={totalPages} totalItems={sortedItems.length} onPageChange={setPage} className="mt-8" />
     </div>
   );
 }
