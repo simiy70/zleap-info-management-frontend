@@ -26,12 +26,12 @@ const Icon = {
 
 /* ─── 助手数据 ─── */
 const assistants = [
-  { id: 1, name: "test小狗",   emoji: "🐶", desc: "暂无简介", tone: "amber",   followed: true,  creator: "这里最…" },
+  { id: 1, name: "test小狗",   emoji: "🐶", desc: "暂无简介", tone: "amber",   followed: true,  creator: "这里最…", followers: 28, dynamics: 16 },
   { id: 2, name: "飞书CLI",    emoji: "🤖", desc: "飞书研发全流程的智能助手，可代为召集会议、写报告。", tone: "slate", followed: true, creator: "研发团队" },
   { id: 3, name: "搜索引擎",   emoji: "🍇", desc: "多源信息聚合检索，同步整理关键结论。", tone: "violet", followed: true, creator: "运营团队" },
   { id: 4, name: "界面新闻",   emoji: "📰", desc: "追踪产品与设计动态，日报级摘要。", tone: "rose",   followed: true, creator: "运营团队" },
   { id: 5, name: "WENDANG",   emoji: "🐘", desc: "文档管理专家，帮你规整长文档。", tone: "gray",   followed: false },
-  { id: 6, name: "611test",    emoji: "🦜", desc: "内部测试机器人，用于回归测试对话。", tone: "green",  followed: true, creator: "这里最…" },
+  { id: 6, name: "611test",    emoji: "🦜", desc: "内部测试机器人，用于回归测试对话。", tone: "green",  followed: true, creator: "这里最…", followers: 12, dynamics: 8 },
 ];
 
 /* ─── 对话数据 ─── */
@@ -115,8 +115,14 @@ function AssistantCard({ item, onContext }) {
         <AssistantAvatar emoji={item.emoji} tone={item.tone} />
       </div>
       <div className="mt-3 line-clamp-1 text-[15px] font-semibold text-neutral-900">{item.name}</div>
-      <div className="mt-2 line-clamp-2 text-center text-[12px] leading-5 text-neutral-400">{item.desc}</div>
-      <div className="mt-auto pt-4">
+      {item.creator === "这里最…" && (
+        <div className="mt-2 flex items-center gap-2 text-[12px] text-neutral-400">
+          <span><b className="font-medium text-neutral-600">{item.followers ?? 0}</b>粉丝</span>
+          <span className="h-3 w-px bg-neutral-200" />
+          <span><b className="font-medium text-neutral-600">{item.dynamics ?? 0}</b>动态</span>
+        </div>
+      )}
+      {item.creator !== "这里最…" && <div className="mt-auto pt-4">
         {item.followed ? (
           <button className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-white px-3.5 py-1 text-[12px] font-medium text-emerald-600 transition hover:bg-emerald-50">
             <Icon.Check />
@@ -128,7 +134,7 @@ function AssistantCard({ item, onContext }) {
             <span>关注</span>
           </button>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
@@ -450,7 +456,7 @@ export default function AssistantPage({ onNavigate, initialPrompt = "", initialC
   const [showCreate, setShowCreate] = useState(false);
   const [customAssistants, setCustomAssistants] = useState([]);
   const handleCreate = (a) => {
-    setCustomAssistants(prev => [{ id: Date.now(), ...a, followed: true, creator: "这里最…" }, ...prev]);
+    setCustomAssistants(prev => [{ id: Date.now(), ...a, followed: true, creator: "这里最…", followers: 0, dynamics: 0 }, ...prev]);
   };
 
   const filteredAssistants = useMemo(() => {

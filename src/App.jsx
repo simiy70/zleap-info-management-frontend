@@ -140,6 +140,24 @@ function getItemScope(item, folderList = folders) {
   return item.owner === CURRENT_USER ? "mine" : "enterprise";
 }
 
+const infoCardTypeIcons = {
+  "文档": "ri-file-text-line",
+  "音频": "ri-music-2-line",
+  "图片": "ri-image-line",
+  "笔记": "ri-sticky-note-line",
+  "网页": "ri-global-line",
+  "会话": "ri-message-3-line",
+  "代码": "ri-code-box-line",
+  "数据库": "ri-database-2-line",
+};
+
+function compactInfoName(name = "") {
+  if (name.length <= 16) return name;
+  const dotIndex = name.lastIndexOf(".");
+  const suffix = dotIndex > 7 ? name.slice(dotIndex) : name.slice(-5);
+  return `${name.slice(0, 7)}…${suffix}`;
+}
+
 // 计算文件夹的聚合摘要：子项数、异常数、是否含同步中
 function getFolderSummary(folder, itemList = infoItems) {
   const children = itemList.filter(i => i.folderId === folder.id);
@@ -2389,7 +2407,6 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
       )}
       {pagedItems.map(item => {
         const isFolder = item.kind === "文件夹";
-        const srcInfo = !isFolder && (sourceInfo[item.source] || { label: item.source });
         const summary = isFolder ? getFolderSummary(item) : null;
         const currentScope = isFolder ? (folderScopes && folderScopes[item.id]) || item.scope : null;
 
@@ -2439,94 +2456,40 @@ function CardView({ items, onOpenFolder, onSelectItem, onContextMenu, onEditConf
           );
         }
 
-        /* ── Regular info item card ── */
-        const syncFreq   = itemSyncFreq[item.id];          // 有值 = 有周期计划；undefined = 无自动同步
-        const syncOn     = syncFreq ? syncStates[item.id] !== false : false;
-        const effStatus  = getDisplaySyncStatus(item, syncingIds.has(item.id) || retryingIds.has(item.id) ? "解析中" : null);  // 立即同步/重试后本地变更为「解析中」
-        const StatusIcon = () => {
-          if (effStatus === "同步中" || effStatus === "解析中")
-            return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="spin"><circle cx="12" cy="12" r="10" stroke="#e5e7eb" strokeWidth="2.5"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round"/></svg>;
-          if (effStatus === "同步完成")
-            return <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#22c55e"/><polyline points="8 12.5 11 15.5 16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-          if (effStatus === "同步失败")
-            return <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#ef4444"/><line x1="9" y1="9" x2="15" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round"/><line x1="15" y1="9" x2="9" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>;
-          return null;
-        };
-        // 笔记后台自动重试，无手动入口
-        const showRetry = effStatus === "同步失败" && item.source !== "笔记" && item.kind !== "笔记";
-        // 状态控件：同步失败且可重试时，状态图标本身即为重试按钮（hover 由红叉变为重试箭头）
-        const StatusControl = () => {
-          if (showRetry) return (
-            <button onClick={e => { e.stopPropagation(); handleRetry(item.id); }}
-              title={`${mockFailureReason(item.source)} · 点击重试`}
-              className="group/retry relative flex h-[18px] w-[18px] shrink-0 items-center justify-center">
-              {/* 默认：红叉 */}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="group-hover/retry:hidden"><circle cx="12" cy="12" r="10" fill="#ef4444"/><line x1="9" y1="9" x2="15" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round"/><line x1="15" y1="9" x2="9" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-              {/* hover：重试箭头 */}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="hidden group-hover/retry:block"><circle cx="12" cy="12" r="10" fill="#ef4444"/><path d="M16 9.5V7m0 2.5h-2.5M16 9.5a4.5 4.5 0 1 0 .9 2.6" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
-          );
-          return <StatusIcon />;
-        };
+        /* ── Regular info item card：预览/类型图标 + 两行名称 ── */
+        const itemScope = getItemScope(item, folderList);
+        const scopeStyle = itemScope === "enterprise"
+          ? { label: "公开", surface: "bg-sky-100", icon: "text-sky-500" }
+          : itemScope === "partial"
+          ? { label: "部分公开", surface: "bg-violet-100", icon: "text-violet-600" }
+          : { label: "私密", surface: "bg-orange-100", icon: "text-orange-500" };
+        const typeLabel = getDisplayTypeLabel(item);
+        const typeIcon = infoCardTypeIcons[typeLabel] || "ri-file-line";
+        const previewUrl = item.previewUrl || item.thumbnailUrl;
         return (
-          <div key={item.id} onClick={() => onSelectItem(item)}
-            className="group flex cursor-pointer flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-4 transition-all hover:border-neutral-300 hover:shadow-md" style={{ minHeight: "120px" }}>
-            {/* 顶部：大图标 + ⋮ */}
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-neutral-100 text-neutral-500">
-                <div style={{ transform: "scale(1.55)", display: "flex" }}>
-                  {React.createElement(srcInfo.Icon || Icon.File)}
-                </div>
-              </div>
+          <div key={item.id} className="min-w-0">
+            <div className="mb-1.5 truncate px-1 text-[11px] text-neutral-400">{scopeStyle.label}</div>
+            <div onClick={() => onSelectItem(item)}
+              className="group relative flex aspect-square cursor-pointer flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md">
               <button onClick={e => { e.stopPropagation(); onContextMenu(item, e); }}
-                className="flex h-6 w-6 items-center justify-center rounded-lg text-neutral-500/60 opacity-0 transition group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700">
+                className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-lg bg-white/85 text-neutral-500/60 opacity-0 shadow-sm backdrop-blur transition group-hover:opacity-100 hover:text-neutral-800"
+                aria-label={`${item.name}更多操作`}>
                 <Icon.More />
               </button>
-            </div>
-            {/* 底部：名称 → 文件夹 badge → 底行（时间+状态 或 自动同步+toggle+状态） */}
-            <div>
-              <div className="line-clamp-2 text-[13px] font-semibold leading-snug text-neutral-900">{item.name}</div>
-              {crossFolderView && item.folderId != null && (() => {
-                const pf = folderList.find(f => f.id === item.folderId);
-                return pf ? (
-                  <div className="mt-1 flex items-center gap-1 text-[10px] text-neutral-400">
-                    <svg width="9" height="9" fill="currentColor" viewBox="0 0 24 22"><path d="M20 6h-8l-2-2.5C9.7 3.2 9.3 3 9 3H4C2.9 3 2 3.9 2 5v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
-                    <span className="truncate max-w-[120px]">{pf.name}</span>
+              <div className="flex min-h-0 flex-1 items-center justify-center px-4 pt-4">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="" className="h-full max-h-[86px] w-full rounded-lg object-contain" />
+                ) : (
+                  <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${scopeStyle.surface}`}>
+                    <i className={`${typeIcon} text-[30px] ${scopeStyle.icon}`} aria-hidden="true" />
                   </div>
-                ) : null;
-              })()}
-              {syncFreq ? (
-                /* 连接器：⟳ 频率+时间点 + toggle + 状态 */
-                <div onClick={e => e.stopPropagation()} className="mt-2 flex items-center justify-between gap-1">
-                  <div className="flex min-w-0 items-center gap-1">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
-                      className={`shrink-0 ${syncOn ? "text-orange-400" : "text-neutral-300"}`}>
-                      <path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"/>
-                    </svg>
-                    <span className={`truncate text-[11px] ${syncOn ? "text-neutral-400" : "text-neutral-300"}`}>
-                      {abbrevFreq(syncFreq)}
-                    </span>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <button onClick={e => { e.stopPropagation(); toggleSync(item.id); }}
-                      className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${syncOn ? "bg-orange-400" : "bg-neutral-200"}`}>
-                      <span className="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200"
-                        style={{ left: syncOn ? "18px" : "2px" }} />
-                    </button>
-                    <StatusControl />
-                  </div>
+                )}
+              </div>
+              <div className="flex min-h-[48px] items-center justify-center px-3 pb-3 pt-1 text-center">
+                <div title={item.name} className="line-clamp-2 text-[12px] font-medium leading-[17px] text-neutral-800">
+                  {compactInfoName(item.name)}
                 </div>
-              ) : (
-                /* 普通项：时间 + 状态 */
-                <div className="mt-1.5 flex items-center justify-between gap-1">
-                  <span className="text-[11px] text-neutral-400">
-                    {timeMode === "created" ? (item.created || item.updated) : item.updated}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-1.5" onClick={e => e.stopPropagation()}>
-                    <StatusControl />
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         );
