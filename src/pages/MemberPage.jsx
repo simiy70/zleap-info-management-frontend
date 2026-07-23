@@ -74,6 +74,23 @@ const flattenDeptTree = depts => {
   walk(null, 0);
   return options;
 };
+const filterDeptTreeOptions = (options, query) => {
+  const keyword = query.trim().toLowerCase();
+  if (!keyword) return options;
+  const visible = new Set();
+  options.forEach((option, index) => {
+    if (!String(option[1]).toLowerCase().includes(keyword)) return;
+    visible.add(index);
+    let targetDepth = option[2];
+    for (let i = index - 1; i >= 0 && targetDepth > 0; i -= 1) {
+      if (options[i][2] < targetDepth) {
+        visible.add(i);
+        targetDepth = options[i][2];
+      }
+    }
+  });
+  return options.filter((_, index) => visible.has(index));
+};
 
 /* ═══ 模拟数据 ═══ */
 const initialDepts = [
@@ -138,13 +155,56 @@ const Field = ({ label, required, children, error, extra }) => (
   </label>
 );
 
-const DeptSelect = ({ depts, value, onChange, allowRoot = false, className = "" }) => (
-  <select value={value ?? ""} onChange={e => onChange(Number(e.target.value))}
-    className={`h-10 w-full rounded-xl border border-input bg-white/70 px-3 text-sm outline-none backdrop-blur focus:border-primary/50 ${className}`}>
-    <option value="" disabled>请选择部门</option>
-    {depts.filter(d => allowRoot || d.parentId !== null).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-  </select>
-);
+function DeptSelect({ depts, value, onChange, allowRoot = false, className = "" }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const selected = depts.find(d => d.id === Number(value));
+  const allOptions = flattenDeptTree(depts);
+  const rootOffset = allowRoot ? 0 : 1;
+  const selectableOptions = allOptions
+    .filter(([id]) => allowRoot || depts.find(d => d.id === id)?.parentId !== null)
+    .map(([id, name, depth, hasChildren]) => [id, name, Math.max(0, depth - rootOffset), hasChildren]);
+  const visibleOptions = filterDeptTreeOptions(selectableOptions, query);
+  const close = () => { setOpen(false); setQuery(""); };
+
+  return <div className={`relative ${open ? "z-[90]" : ""} ${className}`}>
+    <button type="button" onClick={() => { setOpen(v => !v); setQuery(""); }}
+      aria-haspopup="listbox" aria-expanded={open}
+      className={`flex h-10 w-full items-center rounded-xl border bg-white/70 px-3 text-left text-sm outline-none backdrop-blur transition ${open ? "border-primary/50 ring-2 ring-orange-100" : "border-input hover:border-neutral-300"}`}>
+      <span className={selected ? "text-foreground" : "text-muted-foreground"}>{selected?.name || "请选择部门"}</span>
+      <i className={`ri-arrow-down-s-line ml-auto text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
+    </button>
+    {open && <>
+      <button type="button" className="fixed inset-0 z-[-1] cursor-default" aria-label="关闭部门选择" onClick={close} />
+      <div className="absolute left-0 top-full z-10 mt-1 w-full min-w-[240px] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl">
+        <div className="border-b border-neutral-100 p-2">
+          <div className="relative">
+            <i className="ri-search-line pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-neutral-400" />
+            <input autoFocus value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if (e.key === "Escape") close(); }}
+              placeholder="搜索部门"
+              className="h-8 w-full rounded-lg bg-neutral-50 pl-8 pr-8 text-sm outline-none ring-1 ring-neutral-200 focus:bg-white focus:ring-orange-200" />
+            {query && <button type="button" onClick={() => setQuery("")} aria-label="清空部门搜索"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"><i className="ri-close-line" /></button>}
+          </div>
+        </div>
+        <div className="max-h-56 overflow-y-auto py-1" role="listbox" aria-label="部门">
+          {visibleOptions.map(([id, name, depth, hasChildren]) => {
+            const checked = Number(value) === id;
+            return <button key={id} type="button" role="option" aria-selected={checked}
+              onClick={() => { onChange(id); close(); }}
+              className={`flex w-full items-center gap-2 py-2 pr-3 text-left text-sm transition ${checked ? "bg-orange-50 text-orange-600" : "text-neutral-700 hover:bg-neutral-50"}`}
+              style={{ paddingLeft: `${12 + depth * 18}px` }}>
+              <i className={`${depth === 0 ? "ri-building-2-line" : hasChildren ? "ri-node-tree" : "ri-corner-down-right-line"} text-[14px] ${checked ? "text-orange-500" : "text-neutral-400"}`} />
+              <span className={hasChildren || depth === 0 ? "font-medium" : ""}>{name}</span>
+              {checked && <i className="ri-check-line ml-auto text-orange-500" />}
+            </button>;
+          })}
+          {visibleOptions.length === 0 && <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">未找到相关部门</div>}
+        </div>
+      </div>
+    </>}
+  </div>;
+}
 
 /* 顶部二级菜单栏里的紧凑搜索框（与信息源模块一致） */
 const BarSearch = ({ value, onChange, placeholder }) => (
@@ -160,8 +220,9 @@ const BarSearch = ({ value, onChange, placeholder }) => (
 function FilterPopover({ fields, activeCount, onClear }) {
   const [open, setOpen] = useState(false);
   const [openSelect, setOpenSelect] = useState(null);
+  const [selectQuery, setSelectQuery] = useState("");
   const hasFilters = activeCount > 0;
-  const closePanel = () => { setOpen(false); setOpenSelect(null); };
+  const closePanel = () => { setOpen(false); setOpenSelect(null); setSelectQuery(""); };
   const dateCls = "h-10 w-full rounded-lg border border-neutral-200 px-2 text-sm text-neutral-700 outline-none transition hover:border-neutral-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100";
   return (
     <div className="relative z-[70]">
@@ -189,11 +250,12 @@ function FilterPopover({ fields, activeCount, onClear }) {
               const selLabel = f.value.size === 0 ? `请选择${f.label}`
                 : f.value.size === 1 ? (f.options.find(([v]) => v === [...f.value][0])?.[1] || "已选 1 项")
                 : `已选 ${f.value.size} 项`;
+              const visibleOptions = f.tree ? filterDeptTreeOptions(f.options, selectQuery) : f.options;
               return (
                 <div key={f.key} className="grid grid-cols-[64px_1fr] items-center gap-2">
                   <label className="text-sm text-neutral-600">{f.label}</label>
                   <div className="relative">
-                    <div onClick={() => setOpenSelect(openSelect === f.key ? null : f.key)}
+                    <div onClick={() => { setOpenSelect(openSelect === f.key ? null : f.key); setSelectQuery(""); }}
                       className={`flex h-10 w-full cursor-pointer items-center gap-2 rounded-lg border px-3 text-left text-sm transition ${openSelect === f.key ? "border-orange-300 ring-2 ring-orange-100" : "border-neutral-200 hover:border-neutral-300"}`}>
                       <span className={f.value.size > 0 ? "text-neutral-800" : "text-neutral-400"}>{selLabel}</span>
                       <span className="ml-auto flex items-center gap-1 text-neutral-400">
@@ -204,8 +266,18 @@ function FilterPopover({ fields, activeCount, onClear }) {
                     </div>
                     {openSelect === f.key && (
                       <div className="absolute left-0 top-full z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-xl">
-                        {f.tree && <div className="border-b border-neutral-100 px-3 py-2 text-[11px] text-muted-foreground">选择上级部门将同时包含其下级部门</div>}
-                        {f.options.map(([v, lab, depth = 0, hasChildren = false]) => {
+                        {f.tree && <div className="sticky top-0 z-10 border-b border-neutral-100 bg-white p-2">
+                          <div className="relative">
+                            <i className="ri-search-line pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-neutral-400" />
+                            <input autoFocus value={selectQuery} onChange={e => setSelectQuery(e.target.value)}
+                              placeholder="搜索部门"
+                              className="h-8 w-full rounded-lg bg-neutral-50 pl-8 pr-8 text-sm outline-none ring-1 ring-neutral-200 focus:bg-white focus:ring-orange-200" />
+                            {selectQuery && <button type="button" onClick={() => setSelectQuery("")} aria-label="清空部门搜索"
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"><i className="ri-close-line" /></button>}
+                          </div>
+                          <div className="px-1 pt-2 text-[11px] text-muted-foreground">选择上级部门将同时包含其下级部门</div>
+                        </div>}
+                        {visibleOptions.map(([v, lab, depth = 0, hasChildren = false]) => {
                           const checked = f.value.has(v);
                           return <button key={v} onClick={() => { const n = new Set(f.value); if (checked) n.delete(v); else n.add(v); f.onChange(n); }}
                             aria-pressed={checked}
@@ -218,6 +290,7 @@ function FilterPopover({ fields, activeCount, onClear }) {
                             <span className={hasChildren || depth === 0 ? "font-medium" : ""}>{lab}</span>
                           </button>;
                         })}
+                        {visibleOptions.length === 0 && <div className="px-3 py-6 text-center text-[12px] text-muted-foreground">未找到相关部门</div>}
                       </div>
                     )}
                   </div>
