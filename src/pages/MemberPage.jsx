@@ -573,7 +573,14 @@ function PermDialog({ open, onOpenChange, member, depts, members, customTpls, on
 function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, onSaveEdit, ops }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
-  useEffect(() => { if (open) { setEditing(false); setForm(null); } }, [open, member?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [detailTab, setDetailTab] = useState("info");
+  useEffect(() => {
+    if (open) {
+      setEditing(false);
+      setForm(null);
+      setDetailTab("info");
+    }
+  }, [open, member?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!member) return null;
   const deptName = id => depts.find(d => d.id === id)?.name || "—";
   const tplName = member.funcTemplate ? (TPL_SYS[member.funcTemplate]?.name || customTpls.find(t => t.id === member.funcTemplate)?.name || "自定义") : "自定义配置";
@@ -584,38 +591,51 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
     ["电话", member.phone || "—"], ["邮箱", member.email || "—"], ["密码", "••••••••"], ["加入时间", member.joined],
   ];
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="w-[720px] max-h-[86vh] overflow-y-auto">
-      <DialogHeader><DialogTitle>成员详情</DialogTitle></DialogHeader>
-      <div className="space-y-5">
-        {/* 基本信息 */}
-        <section className="rounded-2xl bg-neutral-50/80 p-4 ring-1 ring-border/60">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12"><AvatarImage src={member.avatar} /><AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback></Avatar>
-            <div>
-              <div className="flex items-center gap-2 text-base font-semibold">{member.name}<Badge variant={STATUS[member.status].variant}>{STATUS[member.status].label}</Badge></div>
-              <div className="text-[12px] text-muted-foreground">{member.id} · {deptName(member.deptId)} · {member.position || "—"}</div>
-            </div>
-            <div className="ml-auto flex gap-2">
-              {!editing && member.status !== "resigned" && <Button variant="outline" size="sm" onClick={startEdit}><i className="ri-edit-line" />编辑</Button>}
-            </div>
-          </div>
+    <DialogContent className="flex h-[680px] max-h-[86vh] w-[720px] flex-col overflow-hidden">
+      <DialogHeader className="shrink-0"><DialogTitle>成员详情</DialogTitle></DialogHeader>
+      <div className="flex shrink-0 items-center gap-3 rounded-2xl bg-neutral-50/80 p-4 ring-1 ring-border/60">
+        <Avatar className="h-12 w-12"><AvatarImage src={member.avatar} /><AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback></Avatar>
+        <div>
+          <div className="flex items-center gap-2 text-base font-semibold">{member.name}<Badge variant={STATUS[member.status].variant}>{STATUS[member.status].label}</Badge></div>
+          <div className="text-[12px] text-muted-foreground">{member.id} · {deptName(member.deptId)} · {member.position || "—"}</div>
+        </div>
+        <div className="ml-auto flex gap-2">
+          {!editing && member.status !== "resigned" && <Button variant="outline" size="sm" onClick={() => { setDetailTab("info"); startEdit(); }}><i className="ri-edit-line" />编辑</Button>}
+        </div>
+      </div>
+
+      <div className="mt-4 flex shrink-0 border-b border-border/70" role="tablist" aria-label="成员详情内容">
+        {[["info", "基本信息"], ["changes", `异动记录${myChanges.length ? `（${myChanges.length}）` : ""}`]].map(([key, label]) => (
+          <button key={key} type="button" role="tab" aria-selected={detailTab === key}
+            onClick={() => { setDetailTab(key); if (key !== "info") setEditing(false); }}
+            className={`relative px-4 py-2.5 text-sm font-medium transition ${detailTab === key ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+            {label}
+            {detailTab === key && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-primary" />}
+          </button>
+        ))}
+      </div>
+
+      {detailTab === "info" && <div className="mt-4 min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
+        {/* 账号基础信息 */}
+        <section className="rounded-2xl p-4 ring-1 ring-border/60">
+          <div className="mb-3 text-sm font-semibold">账号信息</div>
           {!editing
-            ? <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm md:grid-cols-3">
-                {infoRows.map(([k, v]) => <div key={k}><div className="text-[11px] text-muted-foreground">{k}</div><div className="mt-0.5 truncate">{v}</div></div>)}
+            ? <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm md:grid-cols-3">
+              {infoRows.map(([k, v]) => <div key={k}><div className="text-[11px] text-muted-foreground">{k}</div><div className="mt-0.5 truncate">{v}</div></div>)}
+            </div>
+            : <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="姓名" required><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={20} /></Field>
+                <Field label="部门" required><DeptSelect depts={depts} value={form.deptId} onChange={v => setForm(f => ({ ...f, deptId: v }))} /></Field>
+                <Field label="职位"><Input value={form.position} onChange={e => setForm(f => ({ ...f, position: e.target.value }))} maxLength={15} /></Field>
+                <Field label="电话"><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></Field>
+                <Field label="邮箱"><Input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></Field>
               </div>
-            : <div className="mt-4 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="姓名" required><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={20} /></Field>
-                  <Field label="部门" required><DeptSelect depts={depts} value={form.deptId} onChange={v => setForm(f => ({ ...f, deptId: v }))} /></Field>
-                  <Field label="职位"><Input value={form.position} onChange={e => setForm(f => ({ ...f, position: e.target.value }))} maxLength={15} /></Field>
-                  <Field label="电话"><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></Field>
-                  <Field label="邮箱"><Input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></Field>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>取消</Button>
-                  <Button size="sm" disabled={!form.name.trim() || !form.deptId || (!form.phone && !form.email)} onClick={() => { onSaveEdit(form); setEditing(false); }}>保存</Button>
-                </div>
-              </div>}
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>取消</Button>
+                <Button size="sm" disabled={!form.name.trim() || !form.deptId || (!form.phone && !form.email)} onClick={() => { onSaveEdit(form); setEditing(false); }}>保存</Button>
+              </div>
+            </div>}
         </section>
 
         {/* 权限摘要 */}
@@ -643,20 +663,22 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
           {member.status === "unactivated" && <Button variant="outline" size="sm" className="text-rose-500 hover:border-rose-200 hover:text-rose-600" onClick={ops.onDelete}><i className="ri-delete-bin-line" />删除账号</Button>}
           {member.status !== "unactivated" && <Button variant="outline" size="sm" className="text-rose-500 hover:border-rose-200 hover:text-rose-600" onClick={ops.onResign}><i className="ri-logout-box-r-line" />操作离职</Button>}
         </section>}
+      </div>}
 
-        {/* 异动记录 */}
-        <section className="rounded-2xl p-4 ring-1 ring-border/60">
-          <div className="flex items-center gap-1.5 text-sm font-semibold"><i className="ri-history-line text-primary" />异动记录</div>
-          {myChanges.length
-            ? <div className="mt-3 overflow-hidden rounded-xl ring-1 ring-border/60">
-                <div className="grid grid-cols-[110px_130px_90px_1fr] gap-2 bg-neutral-50 px-3 py-2 text-[11px] font-medium text-muted-foreground"><span>异动类型</span><span>操作日期</span><span>操作者</span><span>变更详情描述</span></div>
-                {myChanges.map(c => <div key={c.id} className="grid grid-cols-[110px_130px_90px_1fr] gap-2 border-t border-border/50 px-3 py-2 text-[12px]">
-                  <span><Badge variant="secondary" className="font-normal">{c.type}</Badge></span><span className="text-muted-foreground">{c.date}</span><span>{c.operator}</span><span className="whitespace-pre-line text-muted-foreground">{c.desc}</span>
-                </div>)}
-              </div>
-            : <div className="mt-3 rounded-xl bg-neutral-50 py-6 text-center text-[12px] text-muted-foreground">暂无异动记录</div>}
-        </section>
-      </div>
+      {/* 异动记录 Tab */}
+      {detailTab === "changes" && <section className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl p-4 ring-1 ring-border/60">
+        {myChanges.length
+          ? <div className="overflow-hidden rounded-xl ring-1 ring-border/60">
+            <div className="grid grid-cols-[110px_130px_90px_1fr] gap-2 bg-neutral-50 px-3 py-2 text-[11px] font-medium text-muted-foreground"><span>异动类型</span><span>操作日期</span><span>操作者</span><span>变更详情描述</span></div>
+            {myChanges.map(c => <div key={c.id} className="grid grid-cols-[110px_130px_90px_1fr] gap-2 border-t border-border/50 px-3 py-2 text-[12px]">
+              <span><Badge variant="secondary" className="font-normal">{c.type}</Badge></span><span className="text-muted-foreground">{c.date}</span><span>{c.operator}</span><span className="whitespace-pre-line text-muted-foreground">{c.desc}</span>
+            </div>)}
+          </div>
+          : <div className="rounded-xl bg-neutral-50 py-10 text-center text-[12px] text-muted-foreground">
+            <i className="ri-history-line mb-1 block text-2xl text-neutral-300" />
+            暂无异动记录
+          </div>}
+      </section>}
     </DialogContent>
   </Dialog>;
 }
