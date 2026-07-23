@@ -47,6 +47,20 @@ const genPwd = () => {
 };
 const copyText = async t => { try { await navigator.clipboard.writeText(t); } catch { /* 剪贴板不可用时静默失败 */ } };
 const pwdMsg = (m, pwd) => `您的登录账号：${m.phone || m.email}\n初始密码：${pwd}\n请使用以上信息登录智跃Zleap，并在首次登录后修改密码以保障账号安全。`;
+const downloadCredentialCsv = members => {
+  const escapeCsv = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const rows = [
+    ["姓名", "登录账号", "初始密码", "所属部门", "导入时间"],
+    ...members.map(m => [m.name, m.phone || m.email, m.initPwd, m.deptName, m.joined]),
+  ];
+  const blob = new Blob([`\uFEFF${rows.map(row => row.map(escapeCsv).join(",")).join("\n")}`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `Zleap-批量导入初始密码-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
 const validPhone = v => /^1\d{10}$/.test(v);
 const validEmail = v => /^\S+@\S+\.\S+$/.test(v);
 
@@ -298,11 +312,30 @@ function AddMemberDialog({ open, onOpenChange, depts, members, onCreate }) {
 }
 
 /* ═══ 批量导入（下载模板 → 上传 → 校验 → 确认导入 → 结果） ═══ */
-function ImportDialog({ open, onOpenChange, onImport }) {
+function ImportDialog({ open, onOpenChange, onImport, notify }) {
   const [step, setStep] = useState(0);
   const [confirming, setConfirming] = useState(false);
-  useEffect(() => { if (open) { setStep(0); setConfirming(false); } }, [open]);
+  const [created, setCreated] = useState([]);
+  const [credentialsHandled, setCredentialsHandled] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setStep(0);
+      setConfirming(false);
+      setCreated([]);
+      setCredentialsHandled(false);
+    }
+  }, [open]);
   const { pass, fail } = MOCK_IMPORT;
+  const copyAll = () => {
+    copyText(created.map(m => `${m.name}\n${pwdMsg(m, m.initPwd)}`).join("\n\n"));
+    setCredentialsHandled(true);
+    notify(`已复制 ${created.length} 位成员的邀请信息`);
+  };
+  const downloadAll = () => {
+    downloadCredentialCsv(created);
+    setCredentialsHandled(true);
+    notify("初始密码文件已开始下载");
+  };
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="w-[560px]">
       <DialogHeader><DialogTitle>批量导入成员</DialogTitle></DialogHeader>
@@ -337,15 +370,37 @@ function ImportDialog({ open, onOpenChange, onImport }) {
           <Button variant="ghost" onClick={() => setStep(0)}>重新上传</Button>
           {!confirming
             ? <Button onClick={() => setConfirming(true)}>确认导入</Button>
-            : <Button onClick={() => { onImport(pass); setStep(2); }}>继续导入 {pass.length} 条</Button>}
+            : <Button onClick={() => { setCreated(onImport(pass)); setStep(2); }}>继续导入 {pass.length} 条</Button>}
         </DialogFooter>
       </div>}
-      {step === 2 && <div className="flex flex-col items-center py-4 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600"><i className="ri-checkbox-circle-fill" /></span>
-        <div className="mt-3 text-base font-semibold">导入完成</div>
-        <p className="mt-1 text-sm text-muted-foreground">总计导入成功 {pass.length} 条，失败 {fail.length} 条</p>
-        <p className="mt-1 text-[11px] text-muted-foreground">导入成员默认状态为「未激活」，失败行请修正后重新导入</p>
-        <Button className="mt-5 w-40" onClick={() => onOpenChange(false)}>完成</Button>
+      {step === 2 && <div className="space-y-4">
+        <div className="flex flex-col items-center text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600"><i className="ri-checkbox-circle-fill" /></span>
+          <div className="mt-3 text-base font-semibold">导入完成</div>
+          <p className="mt-1 text-sm text-muted-foreground">总计导入成功 {created.length} 条，失败 {fail.length} 条</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">成功成员均为「未激活」，请发送初始密码邀请成员激活</p>
+        </div>
+        <div className="max-h-44 overflow-y-auto rounded-xl ring-1 ring-border/60">
+          {created.map(m => <div key={m.id} className="flex items-center gap-3 border-b border-border/50 px-3 py-2.5 last:border-b-0">
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium">{m.name}<span className="ml-2 text-[11px] font-normal text-muted-foreground">{m.phone || m.email}</span></div>
+              <div className="mt-0.5 font-mono text-[12px] text-neutral-600">初始密码：{m.initPwd}</div>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => {
+              copyText(pwdMsg(m, m.initPwd));
+              setCredentialsHandled(true);
+              notify(`已复制 ${m.name} 的邀请信息`);
+            }}><i className="ri-file-copy-line" />复制</Button>
+          </div>)}
+        </div>
+        {!credentialsHandled && <div className="rounded-xl bg-amber-50 px-3 py-2.5 text-[12px] text-amber-700 ring-1 ring-amber-100">
+          初始密码仅在本次结果中展示。关闭后无法再次查看，请先下载或复制；遗失后需重置密码。
+        </div>}
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={downloadAll}><i className="ri-download-2-line" />下载初始密码文件</Button>
+          <Button variant="outline" onClick={copyAll}><i className="ri-file-copy-line" />复制全部邀请信息</Button>
+        </div>
+        <Button variant="ghost" className="w-full" onClick={() => onOpenChange(false)}>完成</Button>
       </div>}
     </DialogContent>
   </Dialog>;
@@ -583,10 +638,10 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
         {member.status !== "resigned" && <section className="flex flex-wrap gap-2">
           {member.status === "unactivated" && <Button variant="outline" size="sm" onClick={ops.onCopyPwd}><i className="ri-file-copy-line" />复制密码</Button>}
           <Button variant="outline" size="sm" onClick={ops.onResetPwd}><i className="ri-lock-password-line" />重置密码</Button>
-          {member.status !== "disabled"
-            ? <Button variant="outline" size="sm" onClick={ops.onDisable}><i className="ri-forbid-line" />禁用账号</Button>
-            : <Button variant="outline" size="sm" onClick={ops.onRestore}><i className="ri-play-circle-line" />恢复账号</Button>}
-          <Button variant="outline" size="sm" className="text-rose-500 hover:border-rose-200 hover:text-rose-600" onClick={ops.onResign}><i className="ri-logout-box-r-line" />操作离职</Button>
+          {member.status === "active" && <Button variant="outline" size="sm" onClick={ops.onDisable}><i className="ri-forbid-line" />停用账号</Button>}
+          {member.status === "disabled" && <Button variant="outline" size="sm" onClick={ops.onRestore}><i className="ri-play-circle-line" />恢复账号</Button>}
+          {member.status === "unactivated" && <Button variant="outline" size="sm" className="text-rose-500 hover:border-rose-200 hover:text-rose-600" onClick={ops.onDelete}><i className="ri-delete-bin-line" />删除账号</Button>}
+          {member.status !== "unactivated" && <Button variant="outline" size="sm" className="text-rose-500 hover:border-rose-200 hover:text-rose-600" onClick={ops.onResign}><i className="ri-logout-box-r-line" />操作离职</Button>}
         </section>}
 
         {/* 异动记录 */}
@@ -759,23 +814,45 @@ export default function MemberPage({ onNavigate }) {
       id: `ZL${1000 + members.length + 1 + i}`, name: r.name, deptId: depts.find(d => d.name === r.deptName)?.id || 2, position: r.position,
       phone: validPhone(r.account) ? r.account : "", email: validEmail(r.account) ? r.account : "", status: "unactivated", joined: nowStr(),
       dataScope: "dept", scopeTags: [], funcTemplate: "member", funcPerms: { ...TPL_SYS.member.perms },
-      assets: { 助手: 0, 任务: 0, 信息源: 0 }, initPwd: genPwd(), avatar: `https://i.pravatar.cc/64?u=${r.account}`,
+      assets: { 助手: 0, 任务: 0, 信息源: 0 }, initPwd: genPwd(), deptName: r.deptName, avatar: `https://i.pravatar.cc/64?u=${r.account}`,
     }));
     setMembers(v => [...v, ...created]);
     created.forEach(m => pushChange({ name: m.name, type: "账号状态变更", before: "无", after: `账号状态：未激活\n姓名：${m.name}\n归属部门：${deptName(m.deptId)}`, desc: "批量导入成员，账号状态：无 → 未激活" }));
+    return created;
   };
 
-  /* ── 停用 / 恢复 / 导出 ── */
+  /* ── 删除未激活账号 / 停用 / 恢复 / 导出 ── */
   const runConfirm = () => {
     const { type, member } = confirmAct;
     if (type === "disable") {
+      if (member.status !== "active") {
+        notify("仅正常账号支持停用");
+        setConfirmAct(null);
+        return;
+      }
       updateMember(member.id, { status: "disabled" });
       pushChange({ name: member.name, type: "账号状态变更", before: `账号状态：${STATUS[member.status].label}`, after: "账号状态：停用", desc: `账号状态【${STATUS[member.status].label}】→【停用】` });
-      notify("账号已禁用");
+      notify("账号已停用");
     } else if (type === "restore") {
       updateMember(member.id, { status: "active" });
       pushChange({ name: member.name, type: "账号状态变更", before: "账号状态：停用", after: "账号状态：正常", desc: "账号状态【停用】→【正常】" });
       notify("账号已恢复");
+    } else if (type === "delete") {
+      if (member.status !== "unactivated") {
+        notify("仅未激活账号支持删除");
+        setConfirmAct(null);
+        return;
+      }
+      setMembers(v => v.filter(m => m.id !== member.id));
+      pushChange({
+        name: member.name,
+        type: "账号状态变更",
+        before: `账号状态：未激活\n成员 ID：${member.id}`,
+        after: "账号状态：已删除",
+        desc: "删除未激活账号，初始密码、组织关系和权限配置已失效",
+      });
+      setDetailId(null);
+      notify("未激活账号已删除");
     } else if (type === "export") {
       notify(`导出成功，共 ${roster.length} 条，文件已开始下载`);
     }
@@ -914,9 +991,10 @@ export default function MemberPage({ onNavigate }) {
     const items = [{ icon: "ri-user-line", label: "成员详情", fn: () => setDetailId(m.id) }];
     if (m.status === "unactivated") items.push({ icon: "ri-file-copy-line", label: "复制密码", fn: () => { copyText(pwdMsg(m, m.initPwd || "********")); notify("密码已复制"); } });
     if (m.status !== "resigned") items.push({ icon: "ri-lock-password-line", label: "重置密码", fn: () => setResetTarget(m) });
-    if (m.status === "active" || m.status === "unactivated") items.push({ icon: "ri-forbid-line", label: "禁用账号", fn: () => setConfirmAct({ type: "disable", member: m }) });
+    if (m.status === "active") items.push({ icon: "ri-forbid-line", label: "停用账号", fn: () => setConfirmAct({ type: "disable", member: m }) });
     if (m.status === "disabled") items.push({ icon: "ri-play-circle-line", label: "恢复账号", fn: () => setConfirmAct({ type: "restore", member: m }) });
-    if (m.status !== "resigned") items.push({ icon: "ri-logout-box-r-line", label: "操作离职", danger: true, fn: () => openResign(m) });
+    if (m.status === "unactivated") items.push({ icon: "ri-delete-bin-line", label: "删除账号", danger: true, fn: () => setConfirmAct({ type: "delete", member: m }) });
+    if (m.status === "active" || m.status === "disabled") items.push({ icon: "ri-logout-box-r-line", label: "操作离职", danger: true, fn: () => openResign(m) });
     return items;
   };
 
@@ -1129,16 +1207,19 @@ export default function MemberPage({ onNavigate }) {
     <PwdResultDialog open={Boolean(resetResult)} onOpenChange={() => setResetResult(null)} title="密码重置成功"
       member={resetResult?.member} pwd={resetResult?.pwd} copyLabel="复制密码并通知成员"
       onCopy={() => { copyText(pwdMsg(resetResult.member, resetResult.pwd)); notify("密码已复制"); }} />
-    <ImportDialog open={importOpen} onOpenChange={setImportOpen} onImport={doImport} />
+    <ImportDialog open={importOpen} onOpenChange={setImportOpen} onImport={doImport} notify={notify} />
 
     <ConfirmDialog open={Boolean(resetTarget)} onOpenChange={() => setResetTarget(null)} title="重置密码" confirmText="确认重置" onConfirm={doResetPwd}>
       重置后 <b className="text-foreground">{resetTarget?.name}</b> 的原密码立即失效，所有终端将被强制下线，需使用新初始密码重新登录，并在首次登录后强制修改密码。确认重置？
     </ConfirmDialog>
-    <ConfirmDialog open={confirmAct?.type === "disable"} onOpenChange={() => setConfirmAct(null)} title="禁用账号" danger confirmText="确认禁用" onConfirm={runConfirm}>
-      禁用后 <b className="text-foreground">{confirmAct?.member?.name}</b> 将无法登录系统，基础信息与历史数据保留、仍归属原部门，可随时恢复为「正常」。
+    <ConfirmDialog open={confirmAct?.type === "disable"} onOpenChange={() => setConfirmAct(null)} title="停用账号" danger confirmText="确认停用" onConfirm={runConfirm}>
+      停用后 <b className="text-foreground">{confirmAct?.member?.name}</b> 将无法登录系统，基础信息与历史数据保留、仍归属原部门，可随时恢复为「正常」。
     </ConfirmDialog>
     <ConfirmDialog open={confirmAct?.type === "restore"} onOpenChange={() => setConfirmAct(null)} title="恢复账号" confirmText="确认恢复" onConfirm={runConfirm}>
       恢复后 <b className="text-foreground">{confirmAct?.member?.name}</b> 将恢复原有角色与数据权限配置，无需重新分配。
+    </ConfirmDialog>
+    <ConfirmDialog open={confirmAct?.type === "delete"} onOpenChange={() => setConfirmAct(null)} title="删除未激活账号" danger confirmText="确认删除" onConfirm={runConfirm}>
+      删除后，<b className="text-foreground">{confirmAct?.member?.name}</b> 将无法使用当前账号和初始密码登录，已有部门及权限配置会被清除。该操作不可恢复，如需再次邀请，须重新创建账号。
     </ConfirmDialog>
     <ConfirmDialog open={confirmAct?.type === "export"} onOpenChange={() => setConfirmAct(null)} title="批量导出成员" confirmText="确认导出" onConfirm={runConfirm}>
       将按当前筛选条件导出 <b className="text-foreground">{roster.length}</b> 名成员（.xlsx），仅包含您有权限查看的数据。确认后浏览器将自动下载文件。
@@ -1173,6 +1254,7 @@ export default function MemberPage({ onNavigate }) {
         onResetPwd: () => setResetTarget(detailMember),
         onDisable: () => setConfirmAct({ type: "disable", member: detailMember }),
         onRestore: () => setConfirmAct({ type: "restore", member: detailMember }),
+        onDelete: () => setConfirmAct({ type: "delete", member: detailMember }),
         onResign: () => { setDetailId(null); openResign(detailMember); },
       }} />
 
