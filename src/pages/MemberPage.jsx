@@ -63,6 +63,17 @@ const downloadCredentialCsv = members => {
 };
 const validPhone = v => /^1\d{10}$/.test(v);
 const validEmail = v => /^\S+@\S+\.\S+$/.test(v);
+const flattenDeptTree = depts => {
+  const options = [];
+  const walk = (parentId, depth) => {
+    depts.filter(d => d.parentId === parentId).forEach(dept => {
+      options.push([dept.id, dept.name, depth, depts.some(d => d.parentId === dept.id)]);
+      walk(dept.id, depth + 1);
+    });
+  };
+  walk(null, 0);
+  return options;
+};
 
 /* ═══ 模拟数据 ═══ */
 const initialDepts = [
@@ -153,7 +164,7 @@ function FilterPopover({ fields, activeCount, onClear }) {
   const closePanel = () => { setOpen(false); setOpenSelect(null); };
   const dateCls = "h-10 w-full rounded-lg border border-neutral-200 px-2 text-sm text-neutral-700 outline-none transition hover:border-neutral-300 focus:border-orange-300 focus:ring-2 focus:ring-orange-100";
   return (
-    <div className="relative z-20">
+    <div className="relative z-[70]">
       <button onClick={() => { setOpen(v => !v); setOpenSelect(null); }} title="筛选"
         className={`relative flex h-8 w-8 items-center justify-center rounded-xl transition ${hasFilters || open ? "bg-orange-50 text-orange-600 ring-1 ring-orange-200" : "bg-neutral-100/80 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"}`}>
         <i className="ri-filter-3-line text-[15px]" />
@@ -193,12 +204,18 @@ function FilterPopover({ fields, activeCount, onClear }) {
                     </div>
                     {openSelect === f.key && (
                       <div className="absolute left-0 top-full z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-xl">
-                        {f.options.map(([v, lab]) => {
+                        {f.tree && <div className="border-b border-neutral-100 px-3 py-2 text-[11px] text-muted-foreground">选择上级部门将同时包含其下级部门</div>}
+                        {f.options.map(([v, lab, depth = 0, hasChildren = false]) => {
                           const checked = f.value.has(v);
                           return <button key={v} onClick={() => { const n = new Set(f.value); if (checked) n.delete(v); else n.add(v); f.onChange(n); }}
-                            className={`flex w-full items-center gap-2 px-3.5 py-2 text-left text-sm transition ${checked ? "bg-orange-50 text-orange-600" : "text-neutral-700 hover:bg-neutral-50"}`}>
-                            {checked ? <i className="ri-check-line text-[14px]" /> : <span className="w-[14px]" />}
-                            <span>{lab}</span>
+                            aria-pressed={checked}
+                            className={`flex w-full items-center gap-2 py-2 pr-3 text-left text-sm transition ${checked ? "bg-orange-50 text-orange-600" : "text-neutral-700 hover:bg-neutral-50"}`}
+                            style={{ paddingLeft: `${12 + depth * 18}px` }}>
+                            <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${checked ? "border-orange-500 bg-orange-500 text-white" : "border-neutral-300 bg-white"}`}>
+                              {checked && <i className="ri-check-line text-[12px]" />}
+                            </span>
+                            <i className={`${depth === 0 ? "ri-building-2-line" : hasChildren ? "ri-node-tree" : "ri-corner-down-right-line"} text-[14px] ${checked ? "text-orange-500" : "text-neutral-400"}`} />
+                            <span className={hasChildren || depth === 0 ? "font-medium" : ""}>{lab}</span>
                           </button>;
                         })}
                       </div>
@@ -669,9 +686,13 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
       {detailTab === "changes" && <section className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl p-4 ring-1 ring-border/60">
         {myChanges.length
           ? <div className="overflow-hidden rounded-xl ring-1 ring-border/60">
-            <div className="grid grid-cols-[110px_130px_90px_1fr] gap-2 bg-neutral-50 px-3 py-2 text-[11px] font-medium text-muted-foreground"><span>异动类型</span><span>操作日期</span><span>操作者</span><span>变更详情描述</span></div>
-            {myChanges.map(c => <div key={c.id} className="grid grid-cols-[110px_130px_90px_1fr] gap-2 border-t border-border/50 px-3 py-2 text-[12px]">
-              <span><Badge variant="secondary" className="font-normal">{c.type}</Badge></span><span className="text-muted-foreground">{c.date}</span><span>{c.operator}</span><span className="whitespace-pre-line text-muted-foreground">{c.desc}</span>
+            <div className="grid grid-cols-[100px_120px_72px_minmax(140px,1fr)_minmax(140px,1fr)] gap-2 bg-neutral-50 px-3 py-2 text-[11px] font-medium text-muted-foreground"><span>异动类型</span><span>操作日期</span><span>操作者</span><span>变更前</span><span>变更后</span></div>
+            {myChanges.map(c => <div key={c.id} className="grid grid-cols-[100px_120px_72px_minmax(140px,1fr)_minmax(140px,1fr)] gap-2 border-t border-border/50 px-3 py-2.5 text-[12px]">
+              <span><Badge variant="secondary" className="font-normal">{c.type}</Badge></span>
+              <span className="text-muted-foreground">{c.date}</span>
+              <span>{c.operator}</span>
+              <span className="whitespace-pre-line break-words text-muted-foreground">{c.before || "—"}</span>
+              <span className="whitespace-pre-line break-words text-muted-foreground">{c.after || "—"}</span>
             </div>)}
           </div>
           : <div className="rounded-xl bg-neutral-50 py-10 text-center text-[12px] text-muted-foreground">
@@ -1048,7 +1069,7 @@ export default function MemberPage({ onNavigate }) {
             onClear={() => { setFStatus(new Set()); setFDept(new Set()); }}
             fields={[
               { key: "status", label: "账号状态", value: fStatus, onChange: setFStatus, options: Object.entries(STATUS).map(([k, v]) => [k, v.label]) },
-              { key: "dept", label: "部门", value: fDept, onChange: setFDept, options: depts.map(d => [d.id, d.name]) },
+              { key: "dept", label: "部门", value: fDept, onChange: setFDept, tree: true, options: flattenDeptTree(depts) },
             ]} />
           <div className="flex items-center rounded-xl bg-neutral-100/80 p-0.5">
             <button onClick={() => setRosterView("list")} title="列表视图" className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all ${rosterView === "list" ? "bg-white text-orange-600 shadow-sm" : "text-neutral-400 hover:text-neutral-600"}`}><i className="ri-list-check-2" /></button>
