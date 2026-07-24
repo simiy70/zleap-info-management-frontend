@@ -50,7 +50,7 @@ const downloadCredentialFile = async members => {
   const { default: writeExcelFile } = await import('write-excel-file/browser');
   const headerStyle = { fontWeight: "bold", backgroundColor: "#FFF2E8", align: "center" };
   const sheetData = [
-    ["成员 ID", "成员名称", "登录账号", "归属部门", "初始密码"].map(value => ({ value, ...headerStyle })),
+    ["成员 ID", "成员名称", "登录账号（电话 / 邮箱）", "归属部门", "初始密码"].map(value => ({ value, ...headerStyle })),
     ...members.map(m => [m.id, m.name, m.phone || m.email, m.deptName, m.initPwd]),
   ];
   const d = new Date();
@@ -400,23 +400,39 @@ function AddMemberDialog({ open, onOpenChange, depts, members, onCreate }) {
   </Dialog>;
 }
 
-/* ═══ 批量导入（下载模板 → 上传 → 校验 → 确认导入 → 结果） ═══ */
+/* ═══ 批量导入（上传 → 校验 loading / 结果 → 导入 loading / 完成） ═══ */
 function ImportDialog({ open, onOpenChange, onImport, notify }) {
-  const [step, setStep] = useState(0);
-  const [confirming, setConfirming] = useState(false);
+  const [step, setStep] = useState("upload");
+  const [fileName, setFileName] = useState("");
   const [created, setCreated] = useState([]);
   const [credentialsHandled, setCredentialsHandled] = useState(false);
   const [exporting, setExporting] = useState(false);
   useEffect(() => {
     if (open) {
-      setStep(0);
-      setConfirming(false);
+      setStep("upload");
+      setFileName("");
       setCreated([]);
       setCredentialsHandled(false);
       setExporting(false);
     }
   }, [open]);
   const { pass, fail } = MOCK_IMPORT;
+  useEffect(() => {
+    if (step === "validating") {
+      const timer = setTimeout(() => setStep("validation"), 1200);
+      return () => clearTimeout(timer);
+    }
+    if (step === "importing") {
+      const timer = setTimeout(() => {
+        setCreated(onImport(pass));
+        setStep("complete");
+      }, 1400);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  const stageIndex = step === "upload" ? 0 : ["validating", "validation"].includes(step) ? 1 : 2;
+  const stages = ["上传文件", "提交校验", "完成导入"];
   const downloadAll = async () => {
     if (created.length === 0 || exporting) return;
     setExporting(true);
@@ -431,71 +447,97 @@ function ImportDialog({ open, onOpenChange, onImport, notify }) {
     }
   };
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="w-[560px]">
-      <DialogHeader><DialogTitle>批量导入成员</DialogTitle></DialogHeader>
-      {step === 0 && <div className="space-y-4">
-        <div className="flex items-center justify-between rounded-xl bg-neutral-50 px-4 py-3 ring-1 ring-border/60">
-          <div className="flex items-center gap-2 text-sm"><i className="ri-file-excel-2-line text-lg text-emerald-600" />第一步：下载标准模板并填写成员信息</div>
-          <a href="https://ktrcdjhhwa.feishu.cn/wiki/BWrVwWnAxiyWXWkpUlFcAX1Ynsh" target="_blank" rel="noopener noreferrer"><Button variant="outline" size="sm"><i className="ri-download-2-line" />下载模板</Button></a>
-        </div>
-        <button onClick={() => setStep(1)}
-          className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/90 bg-white/40 py-10 text-muted-foreground transition hover:border-orange-300 hover:bg-orange-50/30 hover:text-orange-500">
-          <i className="ri-upload-cloud-2-line text-4xl" />
-          <span className="text-sm font-medium">拖拽文件到此处，或点击选择文件</span>
-          <span className="text-[11px] text-muted-foreground">仅支持 .xlsx / .csv 模板文件（原型演示：点击模拟上传）</span>
-        </button>
-      </div>}
-      {step === 1 && <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-3 text-center">
-          {[["待导入总行数", pass.length + fail.length, ""], ["通过校验", pass.length, "text-emerald-600"], ["校验失败", fail.length, "text-rose-500"]].map(([label, n, cls]) => (
-            <div key={label} className="rounded-xl bg-neutral-50 py-3 ring-1 ring-border/60"><div className={`text-xl font-bold ${cls}`}>{n}</div><div className="text-[11px] text-muted-foreground">{label}</div></div>
-          ))}
-        </div>
-        <div className="overflow-hidden rounded-xl ring-1 ring-border/60">
-          <div className="bg-neutral-50 px-4 py-2 text-[12px] font-medium text-muted-foreground">失败明细</div>
-          {fail.map(f => <div key={f.row} className="flex items-center gap-3 border-t border-border/50 px-4 py-2 text-[12px]">
-            <Badge variant="destructive">第 {f.row} 行</Badge><span className="font-mono">{f.account}</span><span className="ml-auto text-rose-500">{f.reason}</span>
-          </div>)}
-        </div>
-        {confirming && <div className="rounded-xl bg-accent/70 px-3 py-2.5 text-[12px] text-accent-foreground ring-1 ring-orange-100">
-          本次将导入 {pass.length} 条通过校验的成员，{fail.length} 条失败成员需修正后重新导入。
-        </div>}
-        <DialogFooter className="mt-0">
-          <Button variant="ghost" onClick={() => setStep(0)}>重新上传</Button>
-          {!confirming
-            ? <Button onClick={() => setConfirming(true)}>确认导入</Button>
-            : <Button onClick={() => { setCreated(onImport(pass)); setStep(2); }}>继续导入 {pass.length} 条</Button>}
-        </DialogFooter>
-      </div>}
-      {step === 2 && <div className="space-y-4">
-        <div className="flex flex-col items-center text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600"><i className="ri-checkbox-circle-fill" /></span>
-          <div className="mt-3 text-base font-semibold">导入完成</div>
-          <p className="mt-1 text-sm text-muted-foreground">总计导入成功 {created.length} 条，失败 {fail.length} 条</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">成功成员均为「未激活」，请导出初始密码文件并通过安全渠道分发</p>
-        </div>
-        <div className="max-h-44 overflow-y-auto rounded-xl ring-1 ring-border/60">
-          {created.map(m => <div key={m.id} className="flex items-center gap-3 border-b border-border/50 px-3 py-2.5 last:border-b-0">
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium">{m.name}<span className="ml-2 text-[11px] font-normal text-muted-foreground">{m.id}</span></div>
-              <div className="mt-0.5 text-[12px] text-neutral-500">{m.phone || m.email} · {m.deptName}</div>
+    <DialogContent className="flex h-[620px] max-h-[88vh] w-[820px] flex-col overflow-hidden p-0">
+      <div className="grid min-h-0 flex-1 grid-cols-[180px_minmax(0,1fr)]">
+        <aside className="border-r border-border/60 bg-neutral-50/70 px-6 py-7">
+          <div className="text-sm font-semibold">批量导入成员</div>
+          <div className="mt-7">
+            {stages.map((label, index) => {
+              const done = index < stageIndex || step === "complete";
+              const active = index === stageIndex && step !== "complete";
+              return <div key={label} className="relative flex min-h-[86px] gap-3 last:min-h-0">
+                {index < stages.length - 1 && <span className={`absolute left-[5px] top-4 h-[70px] w-px ${index < stageIndex ? "bg-primary" : "bg-border"}`} />}
+                <span className={`relative z-10 mt-1 h-3 w-3 shrink-0 rounded-full border ${done || active ? "border-primary bg-primary" : "border-slate-300 bg-white"}`}>
+                  {done && <span className="absolute inset-0 flex items-center justify-center text-[8px] text-white">✓</span>}
+                </span>
+                <div>
+                  <div className={`text-sm ${active ? "font-semibold text-foreground" : done ? "font-medium text-foreground" : "text-muted-foreground"}`}>{label}</div>
+                  {active && <div className="mt-1 text-[11px] text-muted-foreground">
+                    {step === "validating" ? "正在校验文件" : step === "importing" ? "正在写入成员" : "当前步骤"}
+                  </div>}
+                </div>
+              </div>;
+            })}
+          </div>
+        </aside>
+
+        <div className="flex min-h-0 flex-col p-7">
+          {step === "upload" && <>
+            <DialogHeader><DialogTitle>上传文件</DialogTitle></DialogHeader>
+            <div className="mt-5 flex items-center justify-between rounded-xl bg-orange-50/70 px-4 py-3">
+              <div><div className="text-[13px] font-medium">下载花名册模板</div><div className="mt-0.5 text-[11px] text-muted-foreground">按模板填写后上传，支持 XLSX / CSV</div></div>
+              <a href="https://ktrcdjhhwa.feishu.cn/wiki/BWrVwWnAxiyWXWkpUlFcAX1Ynsh" target="_blank" rel="noopener noreferrer" className="text-[12px] font-medium text-primary hover:underline">立即下载</a>
             </div>
-            <Badge variant="info">未激活</Badge>
-          </div>)}
+            <button type="button" onClick={() => setFileName("花名册成员导入.xlsx")}
+              className={`mt-4 flex min-h-0 flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed transition ${fileName ? "border-emerald-300 bg-emerald-50/30" : "border-orange-200 bg-white hover:border-primary/50 hover:bg-orange-50/30"}`}>
+              <span className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${fileName ? "bg-emerald-100 text-emerald-600" : "bg-orange-100 text-primary"}`}><i className={fileName ? "ri-file-excel-2-line" : "ri-file-add-line"} /></span>
+              <div className="mt-3 text-sm font-medium">{fileName || "拖拽文件到此处，或点击上传"}</div>
+              <div className="mt-1 text-[11px] text-muted-foreground">{fileName ? "文件已选择，点击下一步开始校验" : "支持 XLSX / CSV，文件不超过 5MB"}</div>
+            </button>
+            <div className="mt-5 flex justify-end"><Button disabled={!fileName} onClick={() => setStep("validating")}>下一步</Button></div>
+          </>}
+
+          {["validating", "importing"].includes(step) && <div className="flex min-h-0 flex-1 flex-col">
+            <DialogHeader><DialogTitle>{step === "validating" ? "提交校验" : "完成导入"}</DialogTitle></DialogHeader>
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-50 text-3xl text-primary"><i className="ri-loader-4-line animate-spin" /></span>
+              <div className="mt-5 text-base font-semibold">{step === "validating" ? "正在校验文件" : "正在导入成员"}</div>
+              <p className="mt-2 text-sm text-muted-foreground">{step === "validating" ? "正在检查模板、字段与成员数据，请稍候…" : `正在创建 ${pass.length} 个成员账号并生成初始密码，请稍候…`}</p>
+              <div className="mt-5 h-1.5 w-64 overflow-hidden rounded-full bg-neutral-100"><div className="h-full w-2/3 animate-pulse rounded-full bg-primary" /></div>
+            </div>
+          </div>}
+
+          {step === "validation" && <div className="flex min-h-0 flex-1 flex-col">
+            <DialogHeader><DialogTitle>校验结果</DialogTitle></DialogHeader>
+            <div className="mt-5 grid grid-cols-3 gap-4 rounded-xl bg-neutral-50 p-4 ring-1 ring-border/60">
+              {[["待导入总行数", pass.length + fail.length, "text-foreground"], ["通过校验行数", pass.length, "text-emerald-600"], ["失败行数", fail.length, "text-rose-500"]].map(([label, n, cls]) => (
+                <div key={label} className="rounded-lg bg-white px-4 py-2.5"><div className="text-[11px] text-muted-foreground">{label}</div><div className={`text-xl font-bold ${cls}`}>{n}</div></div>
+              ))}
+            </div>
+            <div className="mt-5 min-h-0 flex-1 overflow-hidden rounded-xl ring-1 ring-border/60">
+              <div className="grid grid-cols-[80px_1fr_160px] bg-neutral-50 px-4 py-2.5 text-[11px] font-medium text-muted-foreground"><span>行号</span><span>账号</span><span>错误原因</span></div>
+              {fail.map(f => <div key={f.row} className="grid grid-cols-[80px_1fr_160px] border-t border-border/50 px-4 py-3 text-[12px]"><span>{f.row}</span><span className="font-mono text-muted-foreground">{f.account}</span><span className="text-rose-500">{f.reason}</span></div>)}
+            </div>
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <span className="mr-auto text-[12px] text-primary">将导入 {pass.length} 条，失败 {fail.length} 条</span>
+              <Button variant="outline" onClick={() => { setStep("upload"); setFileName(""); }}>上一步</Button>
+              <Button onClick={() => setStep("importing")}>确认导入</Button>
+            </div>
+          </div>}
+
+          {step === "complete" && <div className="flex min-h-0 flex-1 flex-col">
+            <DialogHeader><DialogTitle>导入完成</DialogTitle></DialogHeader>
+            <div className="mt-5 flex items-center gap-4 rounded-xl bg-emerald-50/70 px-5 py-4">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-2xl text-emerald-600"><i className="ri-checkbox-circle-fill" /></span>
+              <div><div className="text-base font-semibold">成功导入 {created.length} 条成员</div><div className="mt-1 text-[12px] text-muted-foreground">失败 {fail.length} 条；成功成员状态均为「未激活」</div></div>
+            </div>
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-xl ring-1 ring-border/60">
+              {created.map(m => <div key={m.id} className="flex items-center gap-3 border-b border-border/50 px-4 py-2.5 last:border-b-0">
+                <div className="min-w-0 flex-1"><div className="text-sm font-medium">{m.name}<span className="ml-2 font-mono text-[11px] font-normal text-muted-foreground">{m.id}</span></div><div className="text-[11px] text-muted-foreground">{m.phone || m.email} · {m.deptName}</div></div>
+                <Badge variant="info">未激活</Badge>
+              </div>)}
+            </div>
+            <div className={`mt-4 rounded-xl px-3 py-2.5 text-[12px] ${credentialsHandled ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+              <i className={`${credentialsHandled ? "ri-checkbox-circle-line" : "ri-error-warning-line"} mr-1`} />
+              {credentialsHandled ? "初始密码文件已导出，请妥善保管。" : "关闭后不能再次批量导出；系统不提供复制密码，遗失后需逐个重置。"}
+            </div>
+            <div className="mt-4 flex justify-end gap-3">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>完成</Button>
+              <Button onClick={downloadAll} disabled={created.length === 0 || exporting}><i className={exporting ? "ri-loader-4-line animate-spin" : "ri-file-excel-2-line"} />{exporting ? "正在生成文件" : "导出初始密码文件"}</Button>
+            </div>
+          </div>}
         </div>
-        <div className={`rounded-xl px-3 py-2.5 text-[12px] ring-1 ${credentialsHandled ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-amber-100"}`}>
-          <i className={`${credentialsHandled ? "ri-checkbox-circle-line" : "ri-error-warning-line"} mr-1`} />
-          {credentialsHandled
-            ? "初始密码文件已导出，请妥善保管并通过企业内部安全渠道分发。"
-            : "关闭结果页后不能再次批量导出密码；系统不提供批量复制，遗失后需逐个重置密码。"}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button onClick={downloadAll} disabled={created.length === 0 || exporting}>
-            <i className={exporting ? "ri-loader-4-line animate-spin" : "ri-file-excel-2-line"} />{exporting ? "正在生成文件" : "导出初始密码文件"}
-          </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>完成</Button>
-        </div>
-      </div>}
+      </div>
     </DialogContent>
   </Dialog>;
 }
