@@ -46,8 +46,6 @@ const genPwd = () => {
   let s = Array.from({ length: 6 }, () => L[Math.floor(Math.random() * L.length)]).join("") + Array.from({ length: 4 }, () => D[Math.floor(Math.random() * D.length)]).join("");
   return s.split("").sort(() => Math.random() - 0.5).join("");
 };
-const copyText = async t => { try { await navigator.clipboard.writeText(t); } catch { /* 剪贴板不可用时静默失败 */ } };
-const pwdMsg = (m, pwd) => `您的登录账号：${m.phone || m.email}\n初始密码：${pwd}\n请使用以上信息登录智跃Zleap，并在首次登录后修改密码以保障账号安全。`;
 const downloadCredentialFile = async members => {
   const { default: writeExcelFile } = await import('write-excel-file/browser');
   const headerStyle = { fontWeight: "bold", backgroundColor: "#FFF2E8", align: "center" };
@@ -324,7 +322,7 @@ function ConfirmDialog({ open, onOpenChange, title, children, confirmText = "确
 }
 
 /* 初始密码结果弹窗（新增成功 / 重置成功 共用） */
-function PwdResultDialog({ open, onOpenChange, title, member, pwd, copyLabel, onCopy, onConfig }) {
+function PwdResultDialog({ open, onOpenChange, title, member, pwd, onConfig }) {
   if (!member) return null;
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="w-[440px]">
@@ -336,11 +334,11 @@ function PwdResultDialog({ open, onOpenChange, title, member, pwd, copyLabel, on
           <div className="text-[11px] text-muted-foreground">初始密码</div>
           <div className="mt-0.5 font-mono text-xl font-bold tracking-wider">{pwd}</div>
         </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">请通过企业内部安全渠道（IM / 邮件）告知成员</p>
+        <p className="mt-2 text-[11px] text-muted-foreground">系统不支持复制密码，请关闭前安全记录并通过企业内部安全渠道告知成员</p>
       </div>
       <div className="mt-4 space-y-2">
-        <Button className="w-full" onClick={onCopy}><i className="ri-file-copy-line" />{copyLabel}</Button>
         {onConfig && <Button variant="outline" className="w-full" onClick={onConfig}><i className="ri-shield-keyhole-line" />去配置成员权限</Button>}
+        <Button className="w-full" onClick={() => onOpenChange(false)}>完成</Button>
       </div>
     </DialogContent>
   </Dialog>;
@@ -666,29 +664,64 @@ function PermDialog({ open, onOpenChange, member, depts, members, customTpls, on
 }
 
 /* ═══ 成员详情 / 编辑成员 ═══ */
-function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, onSaveEdit, ops }) {
+function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, onSaveEdit, ops, startEditing = false }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
   const [detailTab, setDetailTab] = useState("info");
+  const [editTab, setEditTab] = useState("basic");
+  const [permDraft, setPermDraft] = useState(null);
+  const [scopeQuery, setScopeQuery] = useState("");
   useEffect(() => {
     if (open) {
-      setEditing(false);
-      setForm(null);
+      setEditing(startEditing);
+      setForm(startEditing ? { name: member.name, deptId: member.deptId, position: member.position, phone: member.phone, email: member.email } : null);
       setDetailTab("info");
+      setEditTab("basic");
+      setScopeQuery("");
+      setPermDraft({
+        dataScope: member.dataScope,
+        scopeTags: member.scopeTags || [],
+        funcTemplate: member.funcTemplate || "none",
+        funcPerms: { ...member.funcPerms },
+      });
     }
-  }, [open, member?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, member?.id, startEditing]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!member) return null;
   const deptName = id => depts.find(d => d.id === id)?.name || "—";
   const tplName = member.funcTemplate ? (TPL_SYS[member.funcTemplate]?.name || customTpls.find(t => t.id === member.funcTemplate)?.name || "自定义") : "自定义配置";
   const myChanges = changes.filter(c => c.name === member.name);
-  const startEdit = () => { setForm({ name: member.name, deptId: member.deptId, position: member.position, phone: member.phone, email: member.email }); setEditing(true); };
+  const startEdit = () => {
+    setForm({ name: member.name, deptId: member.deptId, position: member.position, phone: member.phone, email: member.email });
+    setPermDraft({ dataScope: member.dataScope, scopeTags: member.scopeTags || [], funcTemplate: member.funcTemplate || "none", funcPerms: { ...member.funcPerms } });
+    setEditTab("basic");
+    setEditing(true);
+  };
+  const templatePerms = key => TPL_SYS[key]?.perms || customTpls.find(t => t.id === key)?.perms;
+  const displayedPerms = permDraft?.funcTemplate && permDraft.funcTemplate !== "none"
+    ? templatePerms(permDraft.funcTemplate) || permDraft.funcPerms
+    : permDraft?.funcPerms;
+  const scopeSuggestions = scopeQuery.trim()
+    ? [...depts.filter(d => d.name.includes(scopeQuery)).map(d => ({ type: "dept", id: `d${d.id}`, label: d.name })),
+       ...ops.members.filter(m => m.name.includes(scopeQuery)).map(m => ({ type: "user", id: `u${m.id}`, label: m.name }))]
+      .filter(s => !permDraft?.scopeTags.some(t => t.id === s.id)).slice(0, 6)
+    : [];
+  const saveAll = () => {
+    onSaveEdit(form);
+    ops.onSavePerm({
+      dataScope: permDraft.dataScope,
+      scopeTags: permDraft.dataScope === "custom" ? permDraft.scopeTags : [],
+      funcTemplate: permDraft.funcTemplate === "none" ? null : permDraft.funcTemplate,
+      funcPerms: { ...displayedPerms },
+    });
+    setEditing(false);
+  };
   const infoRows = [
     ["账号 ID", member.id], ["部门", deptName(member.deptId)], ["职位", member.position || "—"],
     ["电话", member.phone || "—"], ["邮箱", member.email || "—"], ["密码", "••••••••"], ["加入时间", member.joined],
   ];
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="flex h-[680px] max-h-[86vh] w-[720px] flex-col overflow-hidden">
-      <DialogHeader className="shrink-0"><DialogTitle>成员详情</DialogTitle></DialogHeader>
+      <DialogHeader className="shrink-0"><DialogTitle>{editing ? "编辑成员" : "成员详情"}</DialogTitle></DialogHeader>
       <div className="flex shrink-0 items-center gap-3 rounded-2xl bg-neutral-50/80 p-4 ring-1 ring-border/60">
         <Avatar className="h-12 w-12"><AvatarImage src={member.avatar} /><AvatarFallback>{member.name.slice(0, 1)}</AvatarFallback></Avatar>
         <div>
@@ -700,18 +733,22 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
         </div>
       </div>
 
-      <div className="mt-4 flex shrink-0 border-b border-border/70" role="tablist" aria-label="成员详情内容">
-        {[["info", "基本信息"], ["changes", `异动记录${myChanges.length ? `（${myChanges.length}）` : ""}`]].map(([key, label]) => (
-          <button key={key} type="button" role="tab" aria-selected={detailTab === key}
-            onClick={() => { setDetailTab(key); if (key !== "info") setEditing(false); }}
-            className={`relative px-4 py-2.5 text-sm font-medium transition ${detailTab === key ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
+      <div className="mt-4 flex shrink-0 border-b border-border/70" role="tablist" aria-label={editing ? "编辑成员内容" : "成员详情内容"}>
+        {(editing
+          ? [["basic", "基础信息"], ["permissions", "权限配置"]]
+          : [["info", "基本信息"], ["changes", `异动记录${myChanges.length ? `（${myChanges.length}）` : ""}`]]
+        ).map(([key, label]) => {
+          const active = editing ? editTab === key : detailTab === key;
+          return <button key={key} type="button" role="tab" aria-selected={active}
+            onClick={() => editing ? setEditTab(key) : setDetailTab(key)}
+            className={`relative px-4 py-2.5 text-sm font-medium transition ${active ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}>
             {label}
-            {detailTab === key && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-primary" />}
-          </button>
-        ))}
+            {active && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-primary" />}
+          </button>;
+        })}
       </div>
 
-      {detailTab === "info" && <div className="mt-4 min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
+      {((!editing && detailTab === "info") || (editing && editTab === "basic")) && <div className="mt-4 min-h-0 flex-1 space-y-5 overflow-y-auto pr-1">
         {/* 账号基础信息 */}
         <section className="rounded-2xl p-4 ring-1 ring-border/60">
           <div className="mb-3 text-sm font-semibold">账号信息</div>
@@ -727,18 +764,13 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
                 <Field label="电话"><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></Field>
                 <Field label="邮箱"><Input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></Field>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>取消</Button>
-                <Button size="sm" disabled={!form.name.trim() || !form.deptId || (!form.phone && !form.email)} onClick={() => { onSaveEdit(form); setEditing(false); }}>保存</Button>
-              </div>
             </div>}
         </section>
 
         {/* 权限摘要 */}
-        <section className="rounded-2xl p-4 ring-1 ring-border/60">
+        {!editing && <section className="rounded-2xl p-4 ring-1 ring-border/60">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-sm font-semibold"><i className="ri-shield-keyhole-line text-primary" />权限配置</div>
-            {member.status !== "resigned" && <Button variant="outline" size="sm" onClick={ops.onEditPerm}><i className="ri-settings-3-line" />编辑权限</Button>}
           </div>
           <div className="mt-3 grid grid-cols-1 gap-2.5 md:grid-cols-2">
             <div className="rounded-xl bg-neutral-50 px-3 py-2.5"><div className="text-[11px] text-muted-foreground">数据权限</div><div className="mt-0.5 text-sm">{SCOPES[member.dataScope]}{member.dataScope === "custom" && member.scopeTags.length > 0 && `（${member.scopeTags.map(t => t.label).join("、")}）`}</div></div>
@@ -748,11 +780,10 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
               </div>
             </div>
           </div>
-        </section>
+        </section>}
 
         {/* 账号操作 */}
-        {member.status !== "resigned" && <section className="flex flex-wrap gap-2">
-          {member.status === "unactivated" && <Button variant="outline" size="sm" onClick={ops.onCopyPwd}><i className="ri-file-copy-line" />复制密码</Button>}
+        {!editing && member.status !== "resigned" && <section className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={ops.onResetPwd}><i className="ri-lock-password-line" />重置密码</Button>
           {member.status === "active" && member.id !== CURRENT_USER_ID && <Button variant="outline" size="sm" onClick={ops.onDisable}><i className="ri-forbid-line" />停用账号</Button>}
           {member.status === "disabled" && <Button variant="outline" size="sm" onClick={ops.onRestore}><i className="ri-play-circle-line" />恢复账号</Button>}
@@ -761,8 +792,62 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
         </section>}
       </div>}
 
+      {/* 编辑成员：权限配置 */}
+      {editing && editTab === "permissions" && permDraft && <div className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        <section className="rounded-2xl p-4 ring-1 ring-border/60">
+          <div className="mb-3 text-sm font-semibold">数据权限</div>
+          <Field label="数据范围">
+            <select value={permDraft.dataScope} onChange={e => setPermDraft(v => ({ ...v, dataScope: e.target.value }))}
+              className="h-10 w-full rounded-xl border border-input bg-white/70 px-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10">
+              {Object.entries(SCOPES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+            </select>
+          </Field>
+          {permDraft.dataScope === "custom" && <div className="mt-3 rounded-xl bg-neutral-50 p-3">
+            <div className="flex flex-wrap gap-1.5">
+              {permDraft.scopeTags.map(t => <span key={t.id} className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[12px] ring-1 ring-border/60">
+                <i className={t.type === "dept" ? "ri-node-tree" : "ri-user-line"} />{t.label}
+                <button type="button" onClick={() => setPermDraft(v => ({ ...v, scopeTags: v.scopeTags.filter(x => x.id !== t.id) }))} aria-label={`移除${t.label}`}><i className="ri-close-line" /></button>
+              </span>)}
+            </div>
+            <Input className="mt-2" value={scopeQuery} onChange={e => setScopeQuery(e.target.value)} placeholder="搜索并添加部门 / 成员" />
+            {scopeSuggestions.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">
+              {scopeSuggestions.map(s => <button key={s.id} type="button" onClick={() => { setPermDraft(v => ({ ...v, scopeTags: [...v.scopeTags, s] })); setScopeQuery(""); }}
+                className="rounded-lg bg-white px-2.5 py-1.5 text-[12px] text-muted-foreground ring-1 ring-border/60 hover:text-primary">
+                <i className={s.type === "dept" ? "ri-node-tree mr-1" : "ri-user-line mr-1"} />{s.label}
+              </button>)}
+            </div>}
+          </div>}
+        </section>
+
+        <section className="rounded-2xl p-4 ring-1 ring-border/60">
+          <div className="mb-3 text-sm font-semibold">功能权限</div>
+          <Field label="权限模版">
+            <select value={permDraft.funcTemplate} onChange={e => {
+              const key = e.target.value;
+              setPermDraft(v => ({ ...v, funcTemplate: key, funcPerms: key === "none" ? v.funcPerms : { ...templatePerms(key) } }));
+            }} className="h-10 w-full rounded-xl border border-input bg-white/70 px-3 text-sm outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10">
+              <option value="admin">管理员</option>
+              <option value="member">普通成员</option>
+              {customTpls.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              <option value="none">自定义配置</option>
+            </select>
+          </Field>
+          <div className="mt-3 overflow-hidden rounded-xl ring-1 ring-border/60">
+            {MODULES.map(mod => <div key={mod.key} className="grid grid-cols-[1fr_180px] items-center gap-3 border-t border-border/50 px-3 py-2.5 first:border-t-0">
+              <div><div className="text-sm font-medium">{mod.name}</div><div className="text-[11px] text-muted-foreground">{mod.desc}</div></div>
+              <select value={displayedPerms[mod.key]} disabled={permDraft.funcTemplate !== "none"}
+                onChange={e => setPermDraft(v => ({ ...v, funcPerms: { ...v.funcPerms, [mod.key]: e.target.value } }))}
+                className="h-9 rounded-lg border border-input bg-white px-2.5 text-[12px] outline-none disabled:bg-neutral-50 disabled:text-muted-foreground">
+                {mod.levels.map(level => <option key={level} value={level}>{LEVELS[level]}</option>)}
+              </select>
+            </div>)}
+          </div>
+          {permDraft.funcTemplate !== "none" && <p className="mt-2 text-[11px] text-muted-foreground">预设模版为只读；选择「自定义配置」后可逐项调整。</p>}
+        </section>
+      </div>}
+
       {/* 异动记录 Tab */}
-      {detailTab === "changes" && <section className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl p-4 ring-1 ring-border/60">
+      {!editing && detailTab === "changes" && <section className="mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl p-4 ring-1 ring-border/60">
         {myChanges.length
           ? <div className="overflow-hidden rounded-xl ring-1 ring-border/60">
             <div className="grid grid-cols-[100px_120px_72px_minmax(140px,1fr)_minmax(140px,1fr)] gap-2 bg-neutral-50 px-3 py-2 text-[11px] font-medium text-muted-foreground"><span>异动类型</span><span>操作日期</span><span>操作者</span><span>变更前</span><span>变更后</span></div>
@@ -779,6 +864,11 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
             暂无异动记录
           </div>}
       </section>}
+
+      {editing && <div className="mt-4 flex shrink-0 justify-end gap-2 border-t border-border/60 pt-3">
+        <Button variant="ghost" onClick={() => setEditing(false)}>取消</Button>
+        <Button disabled={!form?.name.trim() || !form?.deptId || (!form?.phone && !form?.email)} onClick={saveAll}>保存</Button>
+      </div>}
     </DialogContent>
   </Dialog>;
 }
@@ -889,6 +979,7 @@ export default function MemberPage({ onNavigate }) {
   const [resignTarget, setResignTarget] = useState(null);
   const [shortage, setShortage] = useState(null);           // { member, receiver, diffs }
   const [detailId, setDetailId] = useState(null);
+  const [detailMode, setDetailMode] = useState("view");     // view | edit-basic
   const [permId, setPermId] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [deptDialog, setDeptDialog] = useState(null);       // { mode, dept?, parentId? }
@@ -903,6 +994,8 @@ export default function MemberPage({ onNavigate }) {
   const getPerms = m => (m.funcTemplate && TPL_SYS[m.funcTemplate]?.perms) || customTpls.find(t => t.id === m.funcTemplate)?.perms || m.funcPerms;
   const detailMember = members.find(m => m.id === detailId) || null;
   const permMember = members.find(m => m.id === permId) || null;
+  const openDetail = (member, mode = "view") => { setDetailMode(mode); setDetailId(member.id); };
+  const closeDetail = () => { setDetailId(null); setDetailMode("view"); };
 
   /* 花名册数据（按加入时间倒序） */
   const deptDescendants = id => { const res = [id]; const walk = pid => depts.filter(d => d.parentId === pid).forEach(d => { res.push(d.id); walk(d.id); }); walk(id); return res; };
@@ -978,7 +1071,7 @@ export default function MemberPage({ onNavigate }) {
         after: "账号状态：已删除",
         desc: "删除未激活账号，初始密码、组织关系和权限配置已失效",
       });
-      setDetailId(null);
+      closeDetail();
       notify("未激活账号已删除");
     } else if (type === "export") {
       notify(`导出成功，共 ${roster.length} 条，文件已开始下载`);
@@ -1048,14 +1141,15 @@ export default function MemberPage({ onNavigate }) {
   };
 
   /* ── 权限配置保存 ── */
-  const savePerm = patch => {
-    const m = permMember;
+  const saveMemberPerm = (m, patch) => {
+    if (!m) return;
     if (patch.dataScope !== m.dataScope) pushChange({ name: m.name, type: "数据权限调整", before: `数据权限：${SCOPES[m.dataScope]}`, after: `数据权限：${SCOPES[patch.dataScope]}`, desc: `数据权限：【${SCOPES[m.dataScope]}】变更为【${SCOPES[patch.dataScope]}】` });
     const permDiffs = MODULES.filter(mod => patch.funcPerms[mod.key] !== m.funcPerms[mod.key]);
     if (permDiffs.length) pushChange({ name: m.name, type: "功能权限调整", before: permDiffs.map(mod => `${mod.name}：${LEVELS[m.funcPerms[mod.key]]}`).join("\n"), after: permDiffs.map(mod => `${mod.name}：${LEVELS[patch.funcPerms[mod.key]]}`).join("\n"), desc: permDiffs.map(mod => `${mod.name}权限：${LEVELS[m.funcPerms[mod.key]]} → ${LEVELS[patch.funcPerms[mod.key]]}`).join("\n") });
     updateMember(m.id, patch);
     notify("权限配置已保存");
   };
+  const savePerm = patch => saveMemberPerm(permMember, patch);
   const saveTpl = (name, perms) => { const id = `tpl_${Date.now()}`; setCustomTpls(v => [...v, { id, name, perms }]); return id; };
   const deleteTpl = id => {
     setMembers(v => v.map(m => m.funcTemplate === id ? { ...m, funcTemplate: null } : m));
@@ -1120,14 +1214,14 @@ export default function MemberPage({ onNavigate }) {
   }, [changes, cSearch, cTypes, cFrom, cTo, cDesc]);
   const openMemberByName = name => {
     const m = members.find(x => x.name === name);
-    if (m) setDetailId(m.id); else notify("该成员不在花名册中（可能为历史成员）");
+    if (m) openDetail(m); else notify("该成员不在花名册中（可能为历史成员）");
   };
 
   /* 花名册行操作菜单 */
   const rosterOps = m => {
     const isSelf = m.id === CURRENT_USER_ID;
-    const items = [{ icon: "ri-user-line", label: "成员详情", fn: () => setDetailId(m.id) }];
-    if (m.status === "unactivated") items.push({ icon: "ri-file-copy-line", label: "复制密码", fn: () => { copyText(pwdMsg(m, m.initPwd || "********")); notify("密码已复制"); } });
+    const items = [{ icon: "ri-user-line", label: "成员详情", fn: () => openDetail(m) }];
+    if (m.status !== "resigned") items.push({ icon: "ri-edit-line", label: "编辑", fn: () => openDetail(m, "edit-basic") });
     if (m.status !== "resigned") items.push({ icon: "ri-lock-password-line", label: "重置密码", fn: () => setResetTarget(m) });
     if (m.status === "active" && !isSelf) items.push({ icon: "ri-forbid-line", label: "停用账号", fn: () => setConfirmAct({ type: "disable", member: m }) });
     if (m.status === "disabled") items.push({ icon: "ri-play-circle-line", label: "恢复账号", fn: () => setConfirmAct({ type: "restore", member: m }) });
@@ -1201,7 +1295,7 @@ export default function MemberPage({ onNavigate }) {
                 {roster.map(m => <tr key={m.id} className="border-t border-border/50 transition hover:bg-white/50">
                   <td className={`${tdCls} font-mono text-muted-foreground`}>{m.id}</td>
                   <td className={tdCls}>
-                    <button onClick={() => setDetailId(m.id)} className="flex items-center gap-2.5 hover:text-primary">
+                    <button onClick={() => openDetail(m)} className="flex items-center gap-2.5 hover:text-primary">
                       <Avatar className="h-8 w-8"><AvatarImage src={m.avatar} /><AvatarFallback>{m.name.slice(0, 1)}</AvatarFallback></Avatar>
                       <span className="font-medium">{m.name}</span>
                     </button>
@@ -1231,7 +1325,7 @@ export default function MemberPage({ onNavigate }) {
           : <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {roster.map(m => <Card key={m.id} className="flex flex-col p-4 transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(15,23,42,0.1)]">
                 <div className="flex items-start justify-between gap-2">
-                  <button onClick={() => setDetailId(m.id)} className="flex min-w-0 items-center gap-3 text-left">
+                  <button onClick={() => openDetail(m)} className="flex min-w-0 items-center gap-3 text-left">
                     <Avatar className="h-10 w-10"><AvatarImage src={m.avatar} /><AvatarFallback>{m.name.slice(0, 1)}</AvatarFallback></Avatar>
                     <div className="min-w-0">
                       <div className="truncate text-[15px] font-semibold hover:text-primary">{m.name}</div>
@@ -1339,12 +1433,10 @@ export default function MemberPage({ onNavigate }) {
     {/* ═══ 弹窗集合 ═══ */}
     <AddMemberDialog open={addOpen} onOpenChange={setAddOpen} depts={depts} members={members} onCreate={createMember} />
     <PwdResultDialog open={Boolean(createResult)} onOpenChange={() => setCreateResult(null)} title="成员添加成功"
-      member={createResult?.member} pwd={createResult?.pwd} copyLabel="复制密码并邀请激活"
-      onCopy={() => { copyText(pwdMsg(createResult.member, createResult.pwd)); notify("密码已复制"); }}
+      member={createResult?.member} pwd={createResult?.pwd}
       onConfig={() => { setPermId(createResult.member.id); setCreateResult(null); }} />
     <PwdResultDialog open={Boolean(resetResult)} onOpenChange={() => setResetResult(null)} title="密码重置成功"
-      member={resetResult?.member} pwd={resetResult?.pwd} copyLabel="复制密码并通知成员"
-      onCopy={() => { copyText(pwdMsg(resetResult.member, resetResult.pwd)); notify("密码已复制"); }} />
+      member={resetResult?.member} pwd={resetResult?.pwd} />
     <ImportDialog open={importOpen} onOpenChange={setImportOpen} onImport={doImport} notify={notify} />
 
     <ConfirmDialog open={Boolean(resetTarget)} onOpenChange={() => setResetTarget(null)} title="重置密码" confirmText="确认重置" onConfirm={doResetPwd}>
@@ -1384,16 +1476,17 @@ export default function MemberPage({ onNavigate }) {
       </DialogContent>
     </Dialog>
 
-    <DetailDialog open={Boolean(detailMember)} onOpenChange={() => setDetailId(null)} member={detailMember} depts={depts} changes={changes} customTpls={customTpls}
+    <DetailDialog open={Boolean(detailMember)} onOpenChange={closeDetail} member={detailMember} depts={depts} changes={changes} customTpls={customTpls}
+      startEditing={detailMode === "edit-basic"}
       onSaveEdit={saveEdit}
       ops={{
-        onEditPerm: () => setPermId(detailMember?.id),
-        onCopyPwd: () => { copyText(pwdMsg(detailMember, detailMember.initPwd || "********")); notify("密码已复制"); },
+        members,
+        onSavePerm: patch => saveMemberPerm(detailMember, patch),
         onResetPwd: () => setResetTarget(detailMember),
         onDisable: () => setConfirmAct({ type: "disable", member: detailMember }),
         onRestore: () => setConfirmAct({ type: "restore", member: detailMember }),
         onDelete: () => setConfirmAct({ type: "delete", member: detailMember }),
-        onResign: () => { setDetailId(null); openResign(detailMember); },
+        onResign: () => { closeDetail(); openResign(detailMember); },
       }} />
 
     <PermDialog open={Boolean(permMember)} onOpenChange={() => setPermId(null)} member={permMember} depts={depts} members={members}
