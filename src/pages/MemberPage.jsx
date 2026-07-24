@@ -31,6 +31,7 @@ const TPL_SYS = {
 };
 const CHANGE_TYPES = ["成员基础信息变更", "部门调整", "账号状态变更", "操作离职", "数据权限调整", "功能权限调整"];
 const OPERATOR = "Simiy";
+const CURRENT_USER_ID = "ZL1003";
 const NAV_TABS = [
   { id: "roster",  label: "花名册",   icon: "ri-team-line" },
   { id: "depts",   label: "部门管理", icon: "ri-node-tree" },
@@ -47,19 +48,19 @@ const genPwd = () => {
 };
 const copyText = async t => { try { await navigator.clipboard.writeText(t); } catch { /* 剪贴板不可用时静默失败 */ } };
 const pwdMsg = (m, pwd) => `您的登录账号：${m.phone || m.email}\n初始密码：${pwd}\n请使用以上信息登录智跃Zleap，并在首次登录后修改密码以保障账号安全。`;
-const downloadCredentialCsv = members => {
-  const escapeCsv = value => `"${String(value ?? "").replaceAll('"', '""')}"`;
-  const rows = [
-    ["姓名", "登录账号", "初始密码", "所属部门", "导入时间"],
-    ...members.map(m => [m.name, m.phone || m.email, m.initPwd, m.deptName, m.joined]),
+const downloadCredentialFile = async members => {
+  const { default: writeExcelFile } = await import('write-excel-file/browser');
+  const headerStyle = { fontWeight: "bold", backgroundColor: "#FFF2E8", align: "center" };
+  const sheetData = [
+    ["成员 ID", "成员名称", "登录账号", "归属部门", "初始密码"].map(value => ({ value, ...headerStyle })),
+    ...members.map(m => [m.id, m.name, m.phone || m.email, m.deptName, m.initPwd]),
   ];
-  const blob = new Blob([`\uFEFF${rows.map(row => row.map(escapeCsv).join(",")).join("\n")}`], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `Zleap-批量导入初始密码-${new Date().toISOString().slice(0, 10)}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
+  const d = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  const timestamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}`;
+  await writeExcelFile(sheetData, {
+    columns: [{ width: 14 }, { width: 16 }, { width: 28 }, { width: 18 }, { width: 18 }],
+  }).toFile(`成员初始密码_${timestamp}.xlsx`);
 };
 const validPhone = v => /^1\d{10}$/.test(v);
 const validEmail = v => /^\S+@\S+\.\S+$/.test(v);
@@ -407,24 +408,29 @@ function ImportDialog({ open, onOpenChange, onImport, notify }) {
   const [confirming, setConfirming] = useState(false);
   const [created, setCreated] = useState([]);
   const [credentialsHandled, setCredentialsHandled] = useState(false);
+  const [exporting, setExporting] = useState(false);
   useEffect(() => {
     if (open) {
       setStep(0);
       setConfirming(false);
       setCreated([]);
       setCredentialsHandled(false);
+      setExporting(false);
     }
   }, [open]);
   const { pass, fail } = MOCK_IMPORT;
-  const copyAll = () => {
-    copyText(created.map(m => `${m.name}\n${pwdMsg(m, m.initPwd)}`).join("\n\n"));
-    setCredentialsHandled(true);
-    notify(`已复制 ${created.length} 位成员的邀请信息`);
-  };
-  const downloadAll = () => {
-    downloadCredentialCsv(created);
-    setCredentialsHandled(true);
-    notify("初始密码文件已开始下载");
+  const downloadAll = async () => {
+    if (created.length === 0 || exporting) return;
+    setExporting(true);
+    try {
+      await downloadCredentialFile(created);
+      setCredentialsHandled(true);
+      notify("初始密码文件已导出，请妥善保管");
+    } catch {
+      notify("初始密码文件导出失败，请重试");
+    } finally {
+      setExporting(false);
+    }
   };
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="w-[560px]">
@@ -468,29 +474,29 @@ function ImportDialog({ open, onOpenChange, onImport, notify }) {
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600"><i className="ri-checkbox-circle-fill" /></span>
           <div className="mt-3 text-base font-semibold">导入完成</div>
           <p className="mt-1 text-sm text-muted-foreground">总计导入成功 {created.length} 条，失败 {fail.length} 条</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">成功成员均为「未激活」，请发送初始密码邀请成员激活</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">成功成员均为「未激活」，请导出初始密码文件并通过安全渠道分发</p>
         </div>
         <div className="max-h-44 overflow-y-auto rounded-xl ring-1 ring-border/60">
           {created.map(m => <div key={m.id} className="flex items-center gap-3 border-b border-border/50 px-3 py-2.5 last:border-b-0">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium">{m.name}<span className="ml-2 text-[11px] font-normal text-muted-foreground">{m.phone || m.email}</span></div>
-              <div className="mt-0.5 font-mono text-[12px] text-neutral-600">初始密码：{m.initPwd}</div>
+              <div className="text-sm font-medium">{m.name}<span className="ml-2 text-[11px] font-normal text-muted-foreground">{m.id}</span></div>
+              <div className="mt-0.5 text-[12px] text-neutral-500">{m.phone || m.email} · {m.deptName}</div>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => {
-              copyText(pwdMsg(m, m.initPwd));
-              setCredentialsHandled(true);
-              notify(`已复制 ${m.name} 的邀请信息`);
-            }}><i className="ri-file-copy-line" />复制</Button>
+            <Badge variant="info">未激活</Badge>
           </div>)}
         </div>
-        {!credentialsHandled && <div className="rounded-xl bg-amber-50 px-3 py-2.5 text-[12px] text-amber-700 ring-1 ring-amber-100">
-          初始密码仅在本次结果中展示。关闭后无法再次查看，请先下载或复制；遗失后需重置密码。
-        </div>}
-        <div className="grid grid-cols-2 gap-2">
-          <Button onClick={downloadAll}><i className="ri-download-2-line" />下载初始密码文件</Button>
-          <Button variant="outline" onClick={copyAll}><i className="ri-file-copy-line" />复制全部邀请信息</Button>
+        <div className={`rounded-xl px-3 py-2.5 text-[12px] ring-1 ${credentialsHandled ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-amber-100"}`}>
+          <i className={`${credentialsHandled ? "ri-checkbox-circle-line" : "ri-error-warning-line"} mr-1`} />
+          {credentialsHandled
+            ? "初始密码文件已导出，请妥善保管并通过企业内部安全渠道分发。"
+            : "关闭结果页后不能再次批量导出密码；系统不提供批量复制，遗失后需逐个重置密码。"}
         </div>
-        <Button variant="ghost" className="w-full" onClick={() => onOpenChange(false)}>完成</Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={downloadAll} disabled={created.length === 0 || exporting}>
+            <i className={exporting ? "ri-loader-4-line animate-spin" : "ri-file-excel-2-line"} />{exporting ? "正在生成文件" : "导出初始密码文件"}
+          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>完成</Button>
+        </div>
       </div>}
     </DialogContent>
   </Dialog>;
@@ -748,10 +754,10 @@ function DetailDialog({ open, onOpenChange, member, depts, changes, customTpls, 
         {member.status !== "resigned" && <section className="flex flex-wrap gap-2">
           {member.status === "unactivated" && <Button variant="outline" size="sm" onClick={ops.onCopyPwd}><i className="ri-file-copy-line" />复制密码</Button>}
           <Button variant="outline" size="sm" onClick={ops.onResetPwd}><i className="ri-lock-password-line" />重置密码</Button>
-          {member.status === "active" && <Button variant="outline" size="sm" onClick={ops.onDisable}><i className="ri-forbid-line" />停用账号</Button>}
+          {member.status === "active" && member.id !== CURRENT_USER_ID && <Button variant="outline" size="sm" onClick={ops.onDisable}><i className="ri-forbid-line" />停用账号</Button>}
           {member.status === "disabled" && <Button variant="outline" size="sm" onClick={ops.onRestore}><i className="ri-play-circle-line" />恢复账号</Button>}
           {member.status === "unactivated" && <Button variant="outline" size="sm" className="text-rose-500 hover:border-rose-200 hover:text-rose-600" onClick={ops.onDelete}><i className="ri-delete-bin-line" />删除账号</Button>}
-          {member.status !== "unactivated" && <Button variant="outline" size="sm" className="text-rose-500 hover:border-rose-200 hover:text-rose-600" onClick={ops.onResign}><i className="ri-logout-box-r-line" />操作离职</Button>}
+          {member.status !== "unactivated" && member.id !== CURRENT_USER_ID && <Button variant="outline" size="sm" className="text-rose-500 hover:border-rose-200 hover:text-rose-600" onClick={ops.onResign}><i className="ri-logout-box-r-line" />操作离职</Button>}
         </section>}
       </div>}
 
@@ -941,6 +947,11 @@ export default function MemberPage({ onNavigate }) {
   const runConfirm = () => {
     const { type, member } = confirmAct;
     if (type === "disable") {
+      if (member.id === CURRENT_USER_ID) {
+        notify("不支持停用当前登录账号，请由其他管理员操作");
+        setConfirmAct(null);
+        return;
+      }
       if (member.status !== "active") {
         notify("仅正常账号支持停用");
         setConfirmAct(null);
@@ -984,6 +995,10 @@ export default function MemberPage({ onNavigate }) {
 
   /* ── 操作离职 ── */
   const openResign = m => {
+    if (m.id === CURRENT_USER_ID) {
+      notify("不支持对当前登录账号办理离职，请由其他管理员操作");
+      return;
+    }
     const admins = members.filter(x => x.status !== "resigned" && getPerms(x).member === "manage");
     if (admins.length === 1 && admins[0].id === m.id) { notify("该成员为企业唯一管理员，不允许直接离职"); return; }
     setResignTarget(m);
@@ -997,6 +1012,12 @@ export default function MemberPage({ onNavigate }) {
     doResign(m, receiver, false);
   };
   const doResign = (m, receiver, expand) => {
+    if (m.id === CURRENT_USER_ID) {
+      setResignTarget(null);
+      setShortage(null);
+      notify("不支持对当前登录账号办理离职，请由其他管理员操作");
+      return;
+    }
     if (expand) {
       const mp = getPerms(m), rp = getPerms(receiver);
       const upgraded = Object.fromEntries(MODULES.map(mod => [mod.key, LEVEL_RANK[mp[mod.key]] > LEVEL_RANK[rp[mod.key]] ? mp[mod.key] : rp[mod.key]]));
@@ -1104,13 +1125,14 @@ export default function MemberPage({ onNavigate }) {
 
   /* 花名册行操作菜单 */
   const rosterOps = m => {
+    const isSelf = m.id === CURRENT_USER_ID;
     const items = [{ icon: "ri-user-line", label: "成员详情", fn: () => setDetailId(m.id) }];
     if (m.status === "unactivated") items.push({ icon: "ri-file-copy-line", label: "复制密码", fn: () => { copyText(pwdMsg(m, m.initPwd || "********")); notify("密码已复制"); } });
     if (m.status !== "resigned") items.push({ icon: "ri-lock-password-line", label: "重置密码", fn: () => setResetTarget(m) });
-    if (m.status === "active") items.push({ icon: "ri-forbid-line", label: "停用账号", fn: () => setConfirmAct({ type: "disable", member: m }) });
+    if (m.status === "active" && !isSelf) items.push({ icon: "ri-forbid-line", label: "停用账号", fn: () => setConfirmAct({ type: "disable", member: m }) });
     if (m.status === "disabled") items.push({ icon: "ri-play-circle-line", label: "恢复账号", fn: () => setConfirmAct({ type: "restore", member: m }) });
     if (m.status === "unactivated") items.push({ icon: "ri-delete-bin-line", label: "删除账号", danger: true, fn: () => setConfirmAct({ type: "delete", member: m }) });
-    if (m.status === "active" || m.status === "disabled") items.push({ icon: "ri-logout-box-r-line", label: "操作离职", danger: true, fn: () => openResign(m) });
+    if ((m.status === "active" || m.status === "disabled") && !isSelf) items.push({ icon: "ri-logout-box-r-line", label: "操作离职", danger: true, fn: () => openResign(m) });
     return items;
   };
 
